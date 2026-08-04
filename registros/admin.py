@@ -1,3 +1,9 @@
 from django.contrib import admin
 
-# Register your models here.
+from django.contrib import admin
+
+from .models import DiarioDeBordo
+from .models import Registro
+
+admin.site.register(DiarioDeBordo)
+admin.site.register(Registro)
