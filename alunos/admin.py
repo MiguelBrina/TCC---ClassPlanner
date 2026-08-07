@@ -1,7 +1,7 @@
 from django.contrib import admin
 from .models import Aluno
 from .models import Matricula
-from .models import Disciplina
+
 
 @admin.register(Aluno)
 class AlunoAdmin(admin.ModelAdmin):
@@ -18,4 +18,5 @@ class AlunoAdmin(admin.ModelAdmin):
     ordering = (
         "nome_completo",
     )
+
 admin.site.register(Matricula)

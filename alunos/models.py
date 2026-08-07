@@ -17,13 +17,13 @@ class Aluno(models.Model):
 class Matricula(models.Model):
 
     aluno = models.ForeignKey(
-        Aluno,
+        'alunos.Aluno',
         on_delete=models.CASCADE,
         related_name="matriculas"
     )
 
     disciplina = models.ForeignKey(
-        Disciplina,
+        'disciplinas.Disciplina',
         on_delete=models.CASCADE,
         related_name="matriculas"
     )

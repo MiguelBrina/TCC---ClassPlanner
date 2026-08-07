@@ -1,22 +1,25 @@
 from django.db import models
-from .models import Matricula
-from .models import Materia
-from .models import Conteudo
+
 
 class DiarioDeBordo(models.Model):
 
     matricula = models.OneToOneField(
-        Matricula,
-        on_delete=models.CASCADE
+        'alunos.Matricula',
+        on_delete=models.CASCADE,
+        related_name="diario"
     )
 
     def __str__(self):
         return str(self.matricula)
 
+    class Meta:
+        verbose_name = "Diário de Bordo"
+        verbose_name_plural = "Diários de Bordo"
+
 class Registro(models.Model):
 
     diario = models.ForeignKey(
-        DiarioDeBordo,
+        'DiarioDeBordo',
         on_delete=models.CASCADE,
         related_name="registros"
     )
@@ -25,12 +28,18 @@ class Registro(models.Model):
 
     observacao = models.TextField()
 
-materias = models.ManyToManyField(
-    Materia,
-    blank=True
-)
+    materias = models.ManyToManyField(
+        'disciplinas.Materia',
+        blank=True
+    )
 
-conteudos = models.ManyToManyField(
-    Conteudo,
-    blank=True
-)
+    conteudos = models.ManyToManyField(
+        'disciplinas.Conteudo',
+        blank=True
+    )
+
+    def __str__(self):
+        return f"Registro {self.data}"
+
+    class Meta:
+        ordering = ["-data"]
