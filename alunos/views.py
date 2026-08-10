@@ -1,3 +1,12 @@
 from django.shortcuts import render
+from  .models import Aluno
 
-# Create your views here.
+def lista_alunos(request):
+   
+ 
+   alunos = Aluno.objects.all()    
+
+   return render(request,
+          "alunos/lista.html",
+          {"alunos": alunos}
+            )

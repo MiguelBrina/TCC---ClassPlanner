@@ -1,3 +1,12 @@
 from django.shortcuts import render
+from .models import Disciplina
 
-# Create your views here.
+def lista_disciplinas(request):
+   
+ 
+   disciplinas = Disciplina.objects.all()    
+
+   return render(request,
+          "disciplinas/lista.html",
+          {"disciplinas": disciplinas}
+            )
