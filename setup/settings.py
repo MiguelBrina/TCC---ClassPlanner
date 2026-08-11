@@ -17,7 +17,8 @@ ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
 
 CSRF_TRUSTED_ORIGINS = [
     "https://localhost:8000",
-    "https://xxxxx-8000.app.github.dev"
+    "https://xxxxx-8000.app.github.dev",
+    
 ]
 
 
@@ -32,11 +33,9 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 
     # Apps do ClassPlanner
-    'alunos',
-    'agenda',
-    'disciplinas',
-    'registros',
-    'pagamentos',
+    'core',
+    'account'
+
 ]
 
 MIDDLEWARE = [
@@ -49,7 +48,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-ROOT_URLCONF = 'config.urls'
+ROOT_URLCONF = 'setup.urls'
 
 TEMPLATES = [
     {
@@ -66,7 +65,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'config.wsgi.application'
+WSGI_APPLICATION = 'setup.wsgi.application'
 
 
 # Database
