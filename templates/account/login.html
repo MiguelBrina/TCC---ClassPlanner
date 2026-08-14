@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+    <h1>Login</h1>
+
+    <a href="{% url 'painel' %}">
+        Entrar no sistema
+    </a>
+
+    <br>
+
+    <a href="{% url 'esqueci_senha' %}">
+        Esqueci minha senha
+    </a>
+
+    <br>
+
+    <a href="{% url 'cadastro' %}">
+        Criar conta
+    </a>
+
+    <br>
+
+    <a href="{% url 'index' %}">
+        Voltar
+    </a>
+
+{% endblock %}

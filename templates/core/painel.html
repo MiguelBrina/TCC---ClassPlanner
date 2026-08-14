@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+    <h1>Painel do Professor</h1>
+
+    <h2>ClassPlanner</h2>
+
+    <a href="#">
+        Alunos
+    </a>
+
+    <br>
+
+    <a href="#">
+        Disciplinas
+    </a>
+
+    <br>
+
+    <a href="#">
+        Agenda
+    </a>
+
+    <br>
+
+    <a href="{% url 'index' %}">
+        Sair
+    </a>
+
+{% endblock %}

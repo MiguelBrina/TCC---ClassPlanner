@@ -1,4 +1,18 @@
-<h1>ClassPlanner</h1>
+{% extends "base.html" %}
 
-<a href="/login/">Entrar</a>
-<a href="/cadastro/">Cadastrar</a>
+{% block content %}
+
+
+    <p>
+        Sistema de organização para professores.
+    </p>
+
+    <a href="{% url 'login' %}">
+        Entrar
+    </a>
+
+    <a href="{% url 'cadastro' %}">
+        Criar conta
+    </a>
+
+{% endblock %}
