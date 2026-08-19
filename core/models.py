@@ -1,9 +1,9 @@
 from django.db import models
-from account.models import Professor
+
 #region hierarquia de ensino 
 class Disciplina(models.Model):
     professor = models.ForeignKey(
-        "account.Professor",
+        "conta.Professor",
         on_delete=models.CASCADE,
         related_name="disciplinas"
     )
@@ -42,7 +42,7 @@ class Conteudo(models.Model):
 #region alunos
 class Aluno(models.Model):
     professor = models.ForeignKey(
-        "account.Professor",
+        "conta.Professor",
         on_delete=models.CASCADE,
         related_name="alunos"
     )
@@ -75,7 +75,7 @@ class Matricula(models.Model):
 #region agenda do professor 
 class Aula(models.Model):
     professor = models.ForeignKey(
-        "account.Professor",
+        "conta.Professor",
         on_delete=models.CASCADE,
         related_name="aulas"
     )

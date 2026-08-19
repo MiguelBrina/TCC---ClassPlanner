@@ -16,11 +16,12 @@ DEBUG = True
 ALLOWED_HOSTS = [
     "localhost",
     "127.0.0.1",
-    ".app.github.dev",
+  
 ]
 
 CSRF_TRUSTED_ORIGINS = [
-    "https://*.app.github.dev",
+    "https://localhost:8000",
+    "https://opulent-train-x5x4qqxrv479cp49r.github.dev/",
 ]
 
 
@@ -36,7 +37,13 @@ INSTALLED_APPS = [
 
     # Apps do ClassPlanner
     'core',
-    'account'
+    "account.apps.AccountConfig",
+
+    "allauth",
+    "allauth.account",
+    "allauth.socialaccount",
+    "allauth.socialaccount.providers.google"
+
 
 ]
 
@@ -48,7 +55,30 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    "allauth.account.middleware.AccountMiddleware",
+
 ]
+
+#configurações de autenticação
+AUTHENTICATION_BACKENDS = [
+    "django.contrib.auth.backends.ModelBackend",
+    "allauth.account.auth_backends.AuthenticationBackend",
+]
+
+#configurações de conta
+
+ACCOUNT_USER_MODEL_USERNAME_FIELD = None
+
+ACCOUNT_LOGIN_METHODS = {"email"}
+
+ACCOUNT_SIGNUP_FIELDS = [
+    "email*",
+    "password1*",
+    "password2*",
+]
+
+EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+# fim de configurações de conta
 
 ROOT_URLCONF = 'setup.urls'
 

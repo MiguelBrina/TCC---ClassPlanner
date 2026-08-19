@@ -2,28 +2,54 @@
 
 {% block content %}
 
-    <h1>Login</h1>
+<h1>Entrar</h1>
 
-    <a href="{% url 'painel' %}">
-        Entrar no sistema
-    </a>
+{% if erro %}
+    <p>{{ erro }}</p>
+{% endif %}
 
-    <br>
+<form method="post">
 
-    <a href="{% url 'esqueci_senha' %}">
-        Esqueci minha senha
-    </a>
+    {% csrf_token %}
 
-    <br>
+    <label for="email">
+        E-mail
+    </label>
 
+    <input
+        type="email"
+        id="email"
+        name="email"
+        required
+    >
+
+    <label for="senha">
+        Senha
+    </label>
+
+    <input
+        type="password"
+        id="senha"
+        name="senha"
+        required
+    >
+
+    <button type="submit">
+        Entrar
+    </button>
+
+</form>
+
+<p>
     <a href="{% url 'cadastro' %}">
         Criar conta
     </a>
+</p>
 
-    <br>
-
-    <a href="{% url 'index' %}">
-        Voltar
+<p>
+    <a href="{% url 'esqueci_senha' %}">
+        Esqueci minha senha
     </a>
+</p>
 
 {% endblock %}

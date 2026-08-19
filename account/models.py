@@ -1,13 +1,17 @@
+from django.conf import settings
 from django.db import models
-from django.contrib.auth.models import User
 
 
 class Professor(models.Model):
     usuario = models.OneToOneField(
-        User,
+        settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name="professor"
     )
-
+    
     def __str__(self):
-        return self.usuario.get_full_name() or self.usuario.username
+        return self.usuario.first_name or self.usuario.email
+
+    class Meta:
+        verbose_name = "Professor"
+        verbose_name_plural = "Professores"
