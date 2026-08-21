@@ -22,7 +22,9 @@
         {% endblock %}
 
     </main>
-     {% if user.is_authenticated %}
+   
+
+{% if user.is_authenticated %}
 
 <form method="post" action="{% url 'logout' %}">
     {% csrf_token %}
@@ -33,6 +35,7 @@
 </form>
 
 {% endif %}
+
     {% include "includes/footer.html" %}
 
 </body>

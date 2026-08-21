@@ -4,33 +4,33 @@
 
 <h1>Entrar</h1>
 
-{% if erro %}
-    <p>{{ erro }}</p>
+{% if form.errors %}
+    <p>E-mail ou senha inválidos.</p>
 {% endif %}
 
 <form method="post">
 
     {% csrf_token %}
 
-    <label for="email">
+    <label for="{{ form.username.id_for_label }}">
         E-mail
     </label>
 
     <input
-        type="email"
-        id="email"
-        name="email"
+        type="text"
+        name="{{ form.username.html_name }}"
+        id="{{ form.username.id_for_label }}"
         required
     >
 
-    <label for="senha">
+    <label for="{{ form.password.id_for_label }}">
         Senha
     </label>
 
     <input
         type="password"
-        id="senha"
-        name="senha"
+        name="{{ form.password.html_name }}"
+        id="{{ form.password.id_for_label }}"
         required
     >
 
@@ -39,7 +39,10 @@
     </button>
 
 </form>
-
+{% load socialaccount %}
+<a href="{% provider_login_url 'google' %}">
+    Entrar com Google
+</a>
 <p>
     <a href="{% url 'cadastro' %}">
         Criar conta

@@ -1,0 +1,9 @@
+Olá {{ user.first_name|default:user.username }},
+
+Recebemos uma solicitação para redefinir a senha da sua conta no ClassPlanner.
+
+Acesse o link abaixo para criar uma nova senha:
+
+{{ protocol }}://{{ domain }}{% url 'redefinir_senha' uidb64=uid token=token %}
+
+Se você não solicitou essa alteração, ignore este e-mail.
