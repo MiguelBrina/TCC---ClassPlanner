@@ -27,6 +27,8 @@ CSRF_TRUSTED_ORIGINS = [
 
 # Application definition
 SITE_ID = 1
+# Força o allauth a aceitar o site atual independente do domínio exato no navegador
+SOCIALACCOUNT_ADAPTER = 'allauth.socialaccount.adapter.DefaultSocialAccountAdapter'
 
 INSTALLED_APPS = [
     'django.contrib.admin',
