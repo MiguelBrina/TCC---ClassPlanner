@@ -1,15 +1,23 @@
+{% block header %}{% endblock %} <!-- Deixar vazio esconde o header nesta página -->
+{% load static %}
 <!DOCTYPE html>
 <html lang="pt-br">
 
 <head>
-
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <meta name="viewport"
-          content="width=device-width, initial-scale=1.0">
+    <!-- Bloco para mudar o título em cada página -->
+    <title>{% block title %}ClassPlanner{% endblock %}</title>
 
-    <title>ClassPlanner</title>
+    <!-- Conectando css -->
+    <link rel="stylesheet" href="{% static 'css/header.css' %}">
+    <link rel="stylesheet" href="{% static 'css/footer.css' %}">
+    <link rel="stylesheet" href="{% static 'css/base.css' %}">
+    <link rel="stylesheet" href="{% static 'css/componentes.css' %}">
 
+    {% block extra_css %}
+    {% endblock %}
 </head>
 
 <body>
@@ -17,24 +25,23 @@
     {% include "includes/header.html" %}
 
     <main>
-
         {% block content %}
         {% endblock %}
-
     </main>
-     {% if user.is_authenticated %}
 
-<form method="post" action="{% url 'logout' %}">
-    {% csrf_token %}
+    {% if user.is_authenticated %}
+        <!-- Centralizei levemente e usei a classe de botão -->
+        <div style="text-align: center; padding-bottom: 2rem;">
+            <form method="post" action="{% url 'logout' %}">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-outline">
+                    Sair
+                </button>
+            </form>
+        </div>
+    {% endif %}
 
-    <button type="submit">
-        Sair
-    </button>
-</form>
-
-{% endif %}
     {% include "includes/footer.html" %}
 
 </body>
-
 </html>

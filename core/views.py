@@ -14,6 +14,7 @@ def inicio(request):
     
     return render(request, "index.html")
 
+
 @login_required
 def painel(request):
     return render(request, "core/painel.html")

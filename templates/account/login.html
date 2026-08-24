@@ -1,55 +1,31 @@
 {% extends "base.html" %}
 
+{% block title %}Entrar - ClassPlanner{% endblock %}
+
 {% block content %}
+<div class="flex-center" style="min-height: 70vh;">
+    <div class="card" style="width: 100%; max-width: 400px;">
+        <h2 class="text-center" style="margin-bottom: 0.5rem;">Entrar</h2>
+        <p class="text-muted text-center" style="margin-bottom: 1.5rem;">Acesse sua conta do ClassPlanner</p>
 
-<h1>Entrar</h1>
+        <form method="post">
+            {% csrf_token %}
+            <div style="margin-bottom: 1rem;">
+                <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Usuário / E-mail</label>
+                <input type="text" name="username" class="form-control" required placeholder="Seu usuário">
+            </div>
 
-{% if erro %}
-    <p>{{ erro }}</p>
-{% endif %}
+            <div style="margin-bottom: 1.5rem;">
+                <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Senha</label>
+                <input type="password" name="password" class="form-control" required placeholder="••••••••">
+            </div>
 
-<form method="post">
+            <button type="submit" class="btn btn-primary" style="width: 100%;">Entrar</button>
+        </form>
 
-    {% csrf_token %}
-
-    <label for="email">
-        E-mail
-    </label>
-
-    <input
-        type="email"
-        id="email"
-        name="email"
-        required
-    >
-
-    <label for="senha">
-        Senha
-    </label>
-
-    <input
-        type="password"
-        id="senha"
-        name="senha"
-        required
-    >
-
-    <button type="submit">
-        Entrar
-    </button>
-
-</form>
-
-<p>
-    <a href="{% url 'cadastro' %}">
-        Criar conta
-    </a>
-</p>
-
-<p>
-    <a href="{% url 'esqueci_senha' %}">
-        Esqueci minha senha
-    </a>
-</p>
-
+        <p class="text-muted text-center" style="margin-top: 1.5rem; font-size: 0.9rem;">
+            Ainda não tem conta? <a href="{% url 'cadastro' %}" style="text-decoration: underline;">Cadastre-se</a>
+        </p>
+    </div>
+</div>
 {% endblock %}

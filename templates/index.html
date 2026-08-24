@@ -1,18 +1,73 @@
 {% extends "base.html" %}
+{% load static %}
+
+{% block title %}ClassPlanner - Organização para Professores{% endblock %}
 
 {% block content %}
+<div class="container">
 
+    <!-- 1. HERO / ACESSO & LOGIN -->
+    <section class="hero-section">
+        <h1>Planejamento escolar sem complicação</h1>
+        <p class="text-muted">
+            O ClassPlanner é a solução perfeita para professores organizarem suas aulas, 
+            horários e conteúdos em um único lugar.
+        </p>
 
-    <p>
-        Sistema de organização para professores.
-    </p>
+        <div class="flex-center" style="margin-top: 2rem;">
+            <a href="{% url 'login' %}" class="btn btn-primary">Entrar na plataforma</a>
+            <a href="{% url 'cadastro' %}" class="btn btn-outline">Criar conta gratuita</a>
+        </div>
+    </section>
 
-    <a href="{% url 'login' %}">
-        Entrar
-    </a>
+    <!-- 2. NOSSA SOLUÇÃO -->
+    <section style="margin-bottom: 4rem;">
+        <div class="text-center">
+            <h2>A Solução</h2>
+            <p class="text-muted">Tudo o que você precisa para otimizar sua rotina acadêmica.</p>
+        </div>
 
-    <a href="{% url 'cadastro' %}">
-        Criar conta
-    </a>
+        <div class="grid-3">
+            <div class="card">
+                <h3 class="card-title">📚 Planos de Aula</h3>
+                <p class="text-muted">Crie, edite e estruture seus conteúdos letivos de forma rápida e padronizada.</p>
+            </div>
 
+            <div class="card">
+                <h3 class="card-title">🗓️ Gestão de Horários</h3>
+                <p class="text-muted">Visualização clara das suas turmas, disciplinas e prazos importantes em um só painel.</p>
+            </div>
+
+            <div class="card">
+                <h3 class="card-title">💡 Centralização</h3>
+                <p class="text-muted">Chega de anotações perdidas. Mantenha todos os seus materiais e registros organizados.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- 3. NOSSO OBJETIVO -->
+    <section style="margin-bottom: 4rem;">
+        <div class="card" style="text-align: center; padding: 3rem 2rem;">
+            <h2>Nosso Objetivo</h2>
+            <p class="text-muted" style="max-width: 700px; margin: 1rem auto 0 auto;">
+                Devolver ao professor o seu bem mais precioso: <strong>o tempo</strong>. 
+                Reduzimos a burocracia e a sobrecarga de tarefas administrativas para que você 
+                possa focar no que realmente importa — ensinar.
+            </p>
+        </div>
+    </section>
+
+    <!-- 4. SOBRE NÓS -->
+    <section style="margin-bottom: 2rem;">
+        <div class="text-center" style="max-width: 700px; margin: 0 auto;">
+            <h2>Sobre Nós</h2>
+            <p class="text-muted" style="margin-top: 1rem;">
+                O <strong>ClassPlanner</strong> nasceu como um projeto focado em resolver problemas reais 
+                da rotina docente. Unimos tecnologia intuitiva, design minimalista e praticidade para criar 
+                uma ferramenta que atende de fato às necessidades do ambiente escolar.
+            </p>
+        </div>
+    </section>
+
+</div>
 {% endblock %}

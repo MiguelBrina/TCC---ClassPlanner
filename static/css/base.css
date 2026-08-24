@@ -1,0 +1,67 @@
+/* Estilos / Variaveis */
+:root {
+    /* Backgrounds */
+    --bg-main: #f8fafc;        /* Soft slate/ice gray */
+    --bg-card: #ffffff;        /* Pure white for containers */
+    
+    /* Typography */
+    --text-title: #0f172a;     /* Deep navy/slate for headings */
+    --text-body: #334155;      /* Dark gray for readable text */
+    --text-muted: #64748b;     /* Muted gray for subtitles/details */
+    
+    /* Borders & Depth */
+    --border-color: #e2e8f0;   /* Clean subtle border */
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.01);
+    
+    /* Aesthetics */
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* RESET / BASE */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html {
+    font-size: 16px;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+body {
+    background-color: var(--bg-main);
+    color: var(--text-body);
+    line-height: 1.6;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Tipograafia */
+h1, h2, h3, h4, h5, h6 {
+    color: var(--text-title);
+    font-weight: 700;
+    line-height: 1.25;
+}
+
+h1 { font-size: 2.25rem; letter-spacing: -0.025em; }
+h2 { font-size: 1.75rem; letter-spacing: -0.02em; }
+h3 { font-size: 1.25rem; letter-spacing: -0.01em; }
+
+p {
+    margin-bottom: 1rem;
+}
+
+a {
+    color: var(--text-title);
+    text-decoration: none;
+    transition: var(--transition);
+}
+
+a:hover {
+    opacity: 0.8;
+}
