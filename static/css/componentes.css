@@ -110,3 +110,124 @@
     justify-content: center;
     gap: 1rem;
 }
+
+/* sidebar */
+.sidebar-mini {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 68px;
+    height: 100vh;
+    background-color: var(--bg-card);
+    border-right: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.25rem 0.5rem;
+    z-index: 100;
+}
+
+.sidebar-top {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+}
+
+.sidebar-brand-mini {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    color: var(--text-title);
+    margin-bottom: 1.5rem;
+    border-radius: var(--radius-md);
+    transition: var(--transition);
+}
+
+.sidebar-brand-mini:hover {
+    background-color: var(--bg-main);
+}
+
+.sidebar-nav-mini {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    width: 100%;
+    align-items: center;
+}
+
+.sidebar-link-mini {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border-radius: var(--radius-md);
+    color: var(--text-muted);
+    transition: var(--transition);
+}
+
+.sidebar-link-mini:hover {
+    background-color: var(--bg-main);
+    color: var(--text-title);
+}
+
+.sidebar-link-mini.active {
+    background-color: var(--text-title);
+    color: #ffffff;
+}
+
+/* Inferior Esquerdo (Avatar + Logout) */
+.sidebar-bottom-mini {
+    margin-top: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+    width: 100%;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border-color);
+}
+
+.user-avatar-mini {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background-color: var(--text-title);
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.85rem;
+}
+
+.btn-logout-mini {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    background: transparent;
+    color: #ef4444;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.btn-logout-mini:hover {
+    background-color: #fef2f2;
+    border-color: #fca5a5;
+}
+
+/* Ajuste do conteúdo principal com a mini barra */
+.main-with-sidebar {
+    margin-left: 68px;
+    padding: 2.5rem;
+    min-height: 100vh;
+    width: calc(100% - 68px);
+}

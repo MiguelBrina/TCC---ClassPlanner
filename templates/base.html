@@ -1,47 +1,32 @@
-{% block header %}{% endblock %} <!-- Deixar vazio esconde o header nesta página -->
 {% load static %}
 <!DOCTYPE html>
 <html lang="pt-br">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <!-- Bloco para mudar o título em cada página -->
     <title>{% block title %}ClassPlanner{% endblock %}</title>
 
-    <!-- Conectando css -->
-    <link rel="stylesheet" href="{% static 'css/header.css' %}">
-    <link rel="stylesheet" href="{% static 'css/footer.css' %}">
     <link rel="stylesheet" href="{% static 'css/base.css' %}">
     <link rel="stylesheet" href="{% static 'css/componentes.css' %}">
-
-    {% block extra_css %}
-    {% endblock %}
+    <link rel="stylesheet" href="{% static 'css/footer.css' %}">
+    {% block extra_css %}{% endblock %}
 </head>
-
 <body>
 
-    {% include "includes/header.html" %}
-
-    <main>
-        {% block content %}
-        {% endblock %}
-    </main>
-
+    <!-- 1. SIDEBAR: Aparece EXCLUSIVAMENTE para usuários LOGADOS -->
     {% if user.is_authenticated %}
-        <!-- Centralizei levemente e usei a classe de botão -->
-        <div style="text-align: center; padding-bottom: 2rem;">
-            <form method="post" action="{% url 'logout' %}">
-                {% csrf_token %}
-                <button type="submit" class="btn btn-outline">
-                    Sair
-                </button>
-            </form>
-        </div>
+        {% include "includes/header.html" %}
     {% endif %}
 
-    {% include "includes/footer.html" %}
+    <!-- 2. CONTEÚDO: Ajusta a margem automaticamente dependendo do login -->
+    <main class="{% if user.is_authenticated %}main-with-sidebar{% else %}container{% endif %}">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- 3. FOOTER: Aparece EXCLUSIVAMENTE nas páginas públicas (DESLOGADO) -->
+    {% if not user.is_authenticated %}
+        {% include "includes/footer.html" %}
+    {% endif %}
 
 </body>
 </html>
