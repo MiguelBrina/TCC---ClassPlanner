@@ -1,6 +1,6 @@
 from allauth.account.views import SignupView
-from django.urls import path
 from django.contrib.auth import views as views_autenticacao
+from django.urls import path
 
 
 urlpatterns = [
@@ -26,15 +26,15 @@ urlpatterns = [
         name="logout",
     ),
 
-    # recuperação depois
     path(
         "esqueci-senha/",
         views_autenticacao.PasswordResetView.as_view(
             template_name="account/esqueci_senha.html",
             email_template_name="account/email_redefinicao.txt",
+            html_email_template_name="account/email_redefinicao.html",
             success_url="/senha-enviada/",
         ),
-    name="esqueci_senha",
+        name="password_reset",
     ),
 
     path(
@@ -42,7 +42,7 @@ urlpatterns = [
         views_autenticacao.PasswordResetDoneView.as_view(
             template_name="account/senha_enviada.html"
         ),
-        name="senha_enviada",
+        name="password_reset_done",
     ),
 
     path(
@@ -51,8 +51,14 @@ urlpatterns = [
             template_name="account/redefinir_senha.html",
             success_url="/senha-redefinida/",
         ),
-    name="redefinir_senha",
+        name="password_reset_confirm",
     ),
 
-    
+    path(
+        "senha-redefinida/",
+        views_autenticacao.PasswordResetCompleteView.as_view(
+            template_name="account/senha_redefinida.html"
+        ),
+        name="password_reset_complete",
+    ),
 ]

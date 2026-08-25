@@ -1,0 +1,9 @@
+Olá {{ user.first_name|default:user.username }},
+
+Recebemos uma solicitação para redefinir sua senha do ClassPlanner.
+
+Acesse este link:
+
+{{ protocol }}://{{ domain }}{% url 'password_reset_confirm' uidb64=uid token=token %}
+
+Se você não solicitou essa alteração, ignore esta mensagem.

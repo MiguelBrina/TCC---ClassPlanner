@@ -1,9 +1,30 @@
-Olá {{ user.first_name|default:user.username }},
+<!DOCTYPE html>
+<html lang="pt-br">
 
-Recebemos uma solicitação para redefinir a senha da sua conta no ClassPlanner.
+<head>
+    <meta charset="UTF-8">
+    <title>Redefinição de senha</title>
+</head>
 
-Acesse o link abaixo para criar uma nova senha:
+<body>
 
-{{ protocol }}://{{ domain }}{% url 'redefinir_senha' uidb64=uid token=token %}
+    <h2>Redefinição de senha — ClassPlanner</h2>
 
-Se você não solicitou essa alteração, ignore este e-mail.
+    <p>
+        Olá {{ user.first_name|default:user.username }},
+    </p>
+
+    <p>
+        Recebemos uma solicitação para redefinir sua senha.
+    </p>
+
+    <p>
+        <a href="{{ protocol }}://{{ domain }}{% url 'password_reset_confirm' uidb64=uid token=token %}">Redefinir minha senha</a>
+    </p>
+
+    <p>
+        Se você não solicitou essa alteração, ignore este e-mail.
+    </p>
+
+</body>
+</html>

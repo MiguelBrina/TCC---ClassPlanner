@@ -1,5 +1,5 @@
 from pathlib import Path
-
+import os 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -13,10 +13,15 @@ SECRET_KEY = 'django-insecure-)%nm&!q2*xs_)8euokjzs)wah(6fl8-pol=t3j@_ku__8*ryd8
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
+HOST_PUBLICO = os.getenv(
+    "HOST_PUBLICO",
+    "localhost:8000",
+)
+
 ALLOWED_HOSTS = [
     "localhost",
     "127.0.0.1",
-  
+    HOST_PUBLICO.split(":")[0],
 ]
 
 CSRF_TRUSTED_ORIGINS = [
