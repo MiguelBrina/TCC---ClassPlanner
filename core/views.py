@@ -17,3 +17,13 @@ def inicio(request):
 @login_required
 def painel(request):
     return render(request, "core/painel.html")
+
+from django.http import HttpResponse
+
+
+def diagnostico_host(request):
+    return HttpResponse(
+        f"host={request.get_host()} | "
+        f"scheme={request.scheme} | "
+        f"absolute={request.build_absolute_uri()}"
+    )
