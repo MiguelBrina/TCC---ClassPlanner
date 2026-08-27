@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h1>Bem-vindo ao ClassPlanner!</h1>
+
+<p>
+    Antes de começar, configure os dias e horários em que você costuma dar aulas.
+</p>
+
+<form method="post">
+
+    {% csrf_token %}
+
+    {{ form.non_field_errors }}
+
+    <h2>Seu nome</h2>
+
+    <p>
+        {{ form.nome_exibicao.label_tag }}
+        {{ form.nome_exibicao }}
+    </p>
+
+    <h2>Dias e horários</h2>
+
+    <p>
+        {{ form.segunda }}
+        {{ form.segunda.label }}
+        {{ form.segunda_inicio }}
+        {{ form.segunda_fim }}
+    </p>
+
+    <p>
+        {{ form.terca }}
+        {{ form.terca.label }}
+        {{ form.terca_inicio }}
+        {{ form.terca_fim }}
+    </p>
+
+    <p>
+        {{ form.quarta }}
+        {{ form.quarta.label }}
+        {{ form.quarta_inicio }}
+        {{ form.quarta_fim }}
+    </p>
+
+    <p>
+        {{ form.quinta }}
+        {{ form.quinta.label }}
+        {{ form.quinta_inicio }}
+        {{ form.quinta_fim }}
+    </p>
+
+    <p>
+        {{ form.sexta }}
+        {{ form.sexta.label }}
+        {{ form.sexta_inicio }}
+        {{ form.sexta_fim }}
+    </p>
+
+    <p>
+        {{ form.sabado }}
+        {{ form.sabado.label }}
+        {{ form.sabado_inicio }}
+        {{ form.sabado_fim }}
+    </p>
+
+    <p>
+        {{ form.domingo }}
+        {{ form.domingo.label }}
+        {{ form.domingo_inicio }}
+        {{ form.domingo_fim }}
+    </p>
+
+    <button type="submit">
+        Salvar configuração
+    </button>
+
+</form>
+
+{% endblock %}

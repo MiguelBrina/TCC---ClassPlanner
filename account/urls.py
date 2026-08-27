@@ -1,7 +1,7 @@
 from allauth.account.views import SignupView
 from django.contrib.auth import views as views_autenticacao
 from django.urls import path
-
+from . import views
 
 urlpatterns = [
     path(
@@ -61,4 +61,8 @@ urlpatterns = [
         ),
         name="password_reset_complete",
     ),
+
+    path("configuracao-inicial/", views.configuracao_inicial,name="configuracao_inicial"),
+
+    path("pos-login/", views.pos_login,name="pos_login"),
 ]

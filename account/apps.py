@@ -6,5 +6,4 @@ class AccountConfig(AppConfig):
     label= "conta"
 
     def ready(self):
-        print("ACCOUNT APP: carregando signals")
         from . import signals

@@ -136,7 +136,7 @@ ACCOUNT_EMAIL_VERIFICATION = "mandatory"
 
 
 # Redirecionamentos
-LOGIN_REDIRECT_URL = "/painel/"
+LOGIN_REDIRECT_URL = "/pos-login/"
 LOGOUT_REDIRECT_URL = "/"
 
 
