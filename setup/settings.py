@@ -1,73 +1,126 @@
 from pathlib import Path
+import os
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
+
+# ============================================================
+# CAMINHOS
+# ============================================================
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
+# ============================================================
+# URL DO AMBIENTE
+# ============================================================
 
-# SECURITY WARNING: keep the secret key used in production secret!
+SITE_URL = os.getenv(
+    "SITE_URL",
+    "http://localhost:8000"
+)
+
+
+# ============================================================
+# SEGURANÇA BÁSICA
+# ============================================================
+
 SECRET_KEY = 'django-insecure-)%nm&!q2*xs_)8euokjzs)wah(6fl8-pol=t3j@_ku__8*ryd8'
 
-# SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
+
 
 ALLOWED_HOSTS = [
     "localhost",
     "127.0.0.1",
-  
+    "opulent-train-x5x4qqxrv479cp49r-8000.app.github.dev",
 ]
+
 
 CSRF_TRUSTED_ORIGINS = [
+    SITE_URL,
+    "http://localhost:8000",
     "https://localhost:8000",
-    "https://opulent-train-x5x4qqxrv479cp49r.github.dev/",
 ]
 
 
-# Application definition
+# O Codespaces fica atrás de um proxy HTTPS.
+# Essas configurações fazem o Django respeitar
+# o protocolo e o host originais da requisição.
+SECURE_PROXY_SSL_HEADER = (
+    "HTTP_X_FORWARDED_PROTO",
+    "https",
+)
+
+USE_X_FORWARDED_HOST = True
+
+SOCIALACCOUNT_PROVIDERS = {
+    "google": {
+        "EMAIL_AUTHENTICATION": True,
+        "EMAIL_AUTHENTICATION_AUTO_CONNECT": True,
+    },
+}
+
+# ============================================================
+# APPLICATIONS
+# ============================================================
 
 INSTALLED_APPS = [
-    'django.contrib.admin',
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
+    "django.contrib.admin",
+    "django.contrib.auth",
+    "django.contrib.contenttypes",
+    "django.contrib.sessions",
+    "django.contrib.messages",
+    "django.contrib.staticfiles",
+    "django.contrib.sites",
 
     # Apps do ClassPlanner
-    'core',
+    "core",
     "account.apps.AccountConfig",
 
+    # django-allauth
     "allauth",
     "allauth.account",
     "allauth.socialaccount",
-    "allauth.socialaccount.providers.google"
-
-
+    "allauth.socialaccount.providers.google",
 ]
+
+
+# ============================================================
+# MIDDLEWARE
+# ============================================================
 
 MIDDLEWARE = [
-    'django.middleware.security.SecurityMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    "allauth.account.middleware.AccountMiddleware",
+    "django.middleware.security.SecurityMiddleware",
+    "django.contrib.sessions.middleware.SessionMiddleware",
+    "django.middleware.common.CommonMiddleware",
+    "django.middleware.csrf.CsrfViewMiddleware",
+    "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "django.contrib.messages.middleware.MessageMiddleware",
+    "django.middleware.clickjacking.XFrameOptionsMiddleware",
 
+    "allauth.account.middleware.AccountMiddleware",
 ]
 
-#configurações de autenticação
+
+# ============================================================
+# AUTENTICAÇÃO
+# ============================================================
+
 AUTHENTICATION_BACKENDS = [
     "django.contrib.auth.backends.ModelBackend",
     "allauth.account.auth_backends.AuthenticationBackend",
 ]
 
-#configurações de conta
 
-ACCOUNT_USER_MODEL_USERNAME_FIELD = None
+# ============================================================
+# DJANGO SITES
+# ============================================================
+
+SITE_ID = 1
+
+
+# ============================================================
+# CONFIGURAÇÕES DA CONTA
+# ============================================================
 
 ACCOUNT_LOGIN_METHODS = {"email"}
 
@@ -77,75 +130,113 @@ ACCOUNT_SIGNUP_FIELDS = [
     "password2*",
 ]
 
-EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
-# fim de configurações de conta
+ACCOUNT_SIGNUP_FORM_CLASS = "account.forms.FormularioCadastro"
 
-ROOT_URLCONF = 'setup.urls'
+ACCOUNT_EMAIL_VERIFICATION = "mandatory"
+
+
+# Redirecionamentos
+LOGIN_REDIRECT_URL = "/pos-login/"
+LOGOUT_REDIRECT_URL = "/"
+
+
+# ============================================================
+# E-MAIL
+# ============================================================
+
+# Desenvolvimento:
+# imprime os e-mails no terminal do Codespace/local.
+EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+
+
+# ============================================================
+# URLS
+# ============================================================
+
+ROOT_URLCONF = "setup.urls"
+
+
+# ============================================================
+# TEMPLATES
+# ============================================================
 
 TEMPLATES = [
     {
-        'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'templates'],
-        'APP_DIRS': True,
-        'OPTIONS': {
-            'context_processors': [
-                'django.template.context_processors.request',
-                'django.contrib.auth.context_processors.auth',
-                'django.contrib.messages.context_processors.messages',
+        "BACKEND": "django.template.backends.django.DjangoTemplates",
+        "DIRS": [BASE_DIR / "templates"],
+        "APP_DIRS": True,
+        "OPTIONS": {
+            "context_processors": [
+                "django.template.context_processors.request",
+                "django.contrib.auth.context_processors.auth",
+                "django.contrib.messages.context_processors.messages",
             ],
         },
     },
 ]
 
-WSGI_APPLICATION = 'setup.wsgi.application'
+
+WSGI_APPLICATION = "setup.wsgi.application"
 
 
-# Database
-# https://docs.djangoproject.com/en/6.0/ref/settings/#databases
+# ============================================================
+# BANCO DE DADOS
+# ============================================================
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+    "default": {
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": BASE_DIR / "db.sqlite3",
     }
 }
 
 
-# Password validation
-# https://docs.djangoproject.com/en/6.0/ref/settings/#auth-password-validators
+# ============================================================
+# VALIDAÇÃO DE SENHAS
+# ============================================================
 
 AUTH_PASSWORD_VALIDATORS = [
     {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
+        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
+        "OPTIONS": {
+            "min_length": 10,
+        },
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
+        "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
+        "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
+    },
+    {
+        "NAME": "account.password_validators.ValidadorSenhaForte",
     },
 ]
 
 
-# Internationalization
-# https://docs.djangoproject.com/en/6.0/topics/i18n/
+# ============================================================
+# INTERNACIONALIZAÇÃO
+# ============================================================
 
-LANGUAGE_CODE = 'pt-br'
+LANGUAGE_CODE = "pt-br"
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = "UTC"
 
 USE_I18N = True
 
 USE_TZ = True
 
 
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/6.0/howto/static-files/
+# ============================================================
+# ARQUIVOS ESTÁTICOS
+# ============================================================
+
 
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [
     BASE_DIR / 'static',
 ]
+

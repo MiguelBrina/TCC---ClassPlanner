@@ -1,106 +1,86 @@
-from django.contrib.auth import authenticate, login, logout
-from django.contrib.auth.models import User
-from django.shortcuts import render, redirect
+from django.contrib.auth.decorators import login_required
+from django.db import transaction
+from django.shortcuts import redirect, render
 
-from .models import Professor
+from .forms import ConfiguracaoAgendaForm
+from .models import DisponibilidadeProfessor
 
 
-def pagina_login(request):
-    if request.user.is_authenticated:
-        return redirect("/")
+@login_required
+def configuracao_inicial(request):
+
+    professor = request.user.professor
+
+    if professor.agenda_configurada:
+        return redirect("painel")
 
     if request.method == "POST":
 
-        email = request.POST["email"]
-        senha = request.POST["senha"]
+        form = ConfiguracaoAgendaForm(request.POST)
 
-        usuario = authenticate(
-            request,
-            username=email,
-            password=senha
-        )
+        if form.is_valid():
 
-        if usuario is not None:
-            login(request, usuario)
-            return redirect("/")
+            with transaction.atomic():
 
-        return render(
-            request,
-            "account/login.html",
-            {
-                "erro": "E-mail ou senha inválidos."
+                professor.nome_exibicao = form.cleaned_data["nome_exibicao"]
+
+                DisponibilidadeProfessor.objects.filter(
+                    professor=professor
+                ).delete()
+
+                dias = [
+                    (0, "segunda"),
+                    (1, "terca"),
+                    (2, "quarta"),
+                    (3, "quinta"),
+                    (4, "sexta"),
+                    (5, "sabado"),
+                    (6, "domingo"),
+                ]
+
+                for numero_dia, nome_dia in dias:
+
+                    if form.cleaned_data.get(nome_dia):
+
+                        DisponibilidadeProfessor.objects.create(
+                            professor=professor,
+                            dia_semana=numero_dia,
+                            hora_inicio=form.cleaned_data[
+                                f"{nome_dia}_inicio"
+                            ],
+                            hora_fim=form.cleaned_data[
+                                f"{nome_dia}_fim"
+                            ],
+                        )
+
+                professor.agenda_configurada = True
+                professor.save()
+
+            return redirect("painel")
+
+    else:
+
+        form = ConfiguracaoAgendaForm(
+            initial={
+                "nome_exibicao": professor.nome_exibicao
             }
         )
 
     return render(
         request,
-        "account/login.html"
+        "account/configuracao_inicial.html",
+        {"form": form}
     )
 
 
-def cadastro(request):
+@login_required
+def pos_login(request):
 
-    if request.user.is_authenticated:   
-        return redirect("/")
-    
-    if request.method == "POST":
+    professor = request.user.professor
 
-        nome = request.POST["nome"]
-        email = request.POST["email"]
-        senha = request.POST["senha"]
-        confirmar_senha = request.POST["confirmar_senha"]
+    if not professor.agenda_configurada:
+        return redirect("configuracao_inicial")
 
-        if senha != confirmar_senha:
-            return render(
-                request,
-                "account/cadastro.html",
-                {"erro": "As senhas não coincidem."}
-            )
-
-        if User.objects.filter(email=email).exists():
-            return render(
-                request,
-                "account/cadastro.html",
-                {"erro": "Este e-mail já está cadastrado."}
-            )
-
-        usuario = User.objects.create_user(
-            username=email,
-            email=email,
-            password=senha,
-            first_name=nome
-        )
-
-        Professor.objects.create(
-            usuario=usuario
-        )
-
-        usuario_autenticado = authenticate(
-            request,
-            username=email,
-            password=senha
-        )
-
-        if usuario_autenticado is not None:
-            login(request, usuario_autenticado)
-
-        return redirect("/")
-
-    return render(
-        request,
-        "account/cadastro.html"
-    )
+    return redirect("painel")
 
 
-def esqueci_senha(request):
-    return render(request, "account/esqueci_senha.html")
-
-
-def redefinir_senha(request):
-    return render(request, "account/redefinir_senha.html")
-
-def sair(request):
-    if request.method == "POST":
-        logout(request)
-
-    return redirect("/")

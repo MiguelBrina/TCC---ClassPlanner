@@ -1,32 +1,41 @@
 {% load static %}
+
 <!DOCTYPE html>
+
 <html lang="pt-br">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}ClassPlanner{% endblock %}</title>
 
-    <link rel="stylesheet" href="{% static 'css/base.css' %}">
-    <link rel="stylesheet" href="{% static 'css/componentes.css' %}">
-    <link rel="stylesheet" href="{% static 'css/footer.css' %}">
-    {% block extra_css %}{% endblock %}
+```
+<title>{% block title %}ClassPlanner{% endblock %}</title>
+
+<link rel="stylesheet" href="{% static 'css/base.css' %}">
+<link rel="stylesheet" href="{% static 'css/componentes.css' %}">
+<link rel="stylesheet" href="{% static 'css/footer.css' %}">
+
+{% block extra_css %}{% endblock %}
+```
+
 </head>
+
 <body>
 
-    <!-- 1. SIDEBAR: Aparece EXCLUSIVAMENTE para usuários LOGADOS -->
-    {% if user.is_authenticated %}
-        {% include "includes/header.html" %}
-    {% endif %}
+```
+{% if user.is_authenticated %}
+    {% include "includes/header.html" %}
+{% endif %}
 
-    <!-- 2. CONTEÚDO: Ajusta a margem automaticamente dependendo do login -->
-    <main class="{% if user.is_authenticated %}main-with-sidebar{% else %}container{% endif %}">
-        {% block content %}{% endblock %}
-    </main>
+<main class="{% if user.is_authenticated %}main-with-sidebar{% else %}container{% endif %}">
+    {% block content %}{% endblock %}
+</main>
 
-    <!-- 3. FOOTER: Aparece EXCLUSIVAMENTE nas páginas públicas (DESLOGADO) -->
-    {% if not user.is_authenticated %}
-        {% include "includes/footer.html" %}
-    {% endif %}
+{% if not user.is_authenticated %}
+    {% include "includes/footer.html" %}
+{% endif %}
+```
 
 </body>
+
 </html>
