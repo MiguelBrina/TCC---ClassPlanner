@@ -1,16 +1,16 @@
+from django.contrib.auth import get_user_model
 from django.db.models.signals import post_save
 from django.dispatch import receiver
-
-from allauth.socialaccount.models import SocialAccount
 
 from .models import Professor
 
 
-@receiver(post_save, sender=SocialAccount)
-def criar_professor_conta_social(sender, instance, **kwargs):
+User = get_user_model()
 
-    print("SIGNAL SOCIALACCOUNT:", instance.user)
 
-    Professor.objects.get_or_create(
-        usuario=instance.user
-    )
+@receiver(post_save, sender=User)
+def criar_professor_usuario(sender, instance, created, **kwargs):
+    if created:
+        Professor.objects.get_or_create(
+            usuario=instance
+        )

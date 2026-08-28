@@ -13,10 +13,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # URL DO AMBIENTE
 # ============================================================
 
-SITE_URL = os.getenv(
-    "SITE_URL",
-    "http://localhost:8000"
-)
+SITE_URL = SITE_URL = "https://potential-space-waffle-x5x4qqxrv4g5cv4wr-8000.app.github.dev"
 
 
 # ============================================================
@@ -31,7 +28,7 @@ DEBUG = True
 ALLOWED_HOSTS = [
     "localhost",
     "127.0.0.1",
-    "opulent-train-x5x4qqxrv479cp49r-8000.app.github.dev",
+    ".app.github.dev",
 ]
 
 

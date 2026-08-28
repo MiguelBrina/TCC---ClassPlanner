@@ -5,9 +5,6 @@ from django.shortcuts import render, redirect
 def index(request):
     return render(request, "index.html")
 
-def painel(request):
-    return render(request, "core/painel.html")
-
 def inicio(request):
     if request.user.is_authenticated:
         return redirect("painel")
