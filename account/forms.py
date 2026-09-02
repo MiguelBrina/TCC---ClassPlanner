@@ -1,6 +1,7 @@
 from django import forms
+import json
 
-from .models import Professor
+from .models import Professor, DisponibilidadeProfessor
 
 
 class FormularioCadastro(forms.Form):
@@ -19,122 +20,38 @@ class FormularioCadastro(forms.Form):
 
 
 class ConfiguracaoAgendaForm(forms.Form):
-
     nome_exibicao = forms.CharField(
         label="Como você quer ser chamado?",
         max_length=100,
         required=False,
     )
 
-    segunda = forms.BooleanField(
-        label="Segunda-feira",
+    dias = forms.CharField(
         required=False,
+        widget=forms.HiddenInput()
     )
 
-    segunda_inicio = forms.TimeField(
+    horarios = forms.CharField(
         required=False,
-        widget=forms.TimeInput(attrs={"type": "time"}),
+        widget=forms.HiddenInput()
     )
 
-    segunda_fim = forms.TimeField(
-        required=False,
-        widget=forms.TimeInput(attrs={"type": "time"}),
-    )
+    def clean_dias(self):
+        valor = self.cleaned_data.get("dias", "")
 
-    terca = forms.BooleanField(
-        label="Terça-feira",
-        required=False,
-    )
+        if not valor:
+            raise forms.ValidationError(
+                "Selecione pelo menos um dia da semana."
+            )
 
-    terca_inicio = forms.TimeField(
-        required=False,
-        widget=forms.TimeInput(attrs={"type": "time"}),
-    )
+        try:
+            dias = json.loads(valor)
+        except json.JSONDecodeError:
+            raise forms.ValidationError(
+                "Os dias selecionados são inválidos."
+            )
 
-    terca_fim = forms.TimeField(
-        required=False,
-        widget=forms.TimeInput(attrs={"type": "time"}),
-    )
-
-    quarta = forms.BooleanField(
-        label="Quarta-feira",
-        required=False,
-    )
-
-    quarta_inicio = forms.TimeField(
-        required=False,
-        widget=forms.TimeInput(attrs={"type": "time"}),
-    )
-
-    quarta_fim = forms.TimeField(
-        required=False,
-        widget=forms.TimeInput(attrs={"type": "time"}),
-    )
-
-    quinta = forms.BooleanField(
-        label="Quinta-feira",
-        required=False,
-    )
-
-    quinta_inicio = forms.TimeField(
-        required=False,
-        widget=forms.TimeInput(attrs={"type": "time"}),
-    )
-
-    quinta_fim = forms.TimeField(
-        required=False,
-        widget=forms.TimeInput(attrs={"type": "time"}),
-    )
-
-    sexta = forms.BooleanField(
-        label="Sexta-feira",
-        required=False,
-    )
-
-    sexta_inicio = forms.TimeField(
-        required=False,
-        widget=forms.TimeInput(attrs={"type": "time"}),
-    )
-
-    sexta_fim = forms.TimeField(
-        required=False,
-        widget=forms.TimeInput(attrs={"type": "time"}),
-    )
-
-    sabado = forms.BooleanField(
-        label="Sábado",
-        required=False,
-    )
-
-    sabado_inicio = forms.TimeField(
-        required=False,
-        widget=forms.TimeInput(attrs={"type": "time"}),
-    )
-
-    sabado_fim = forms.TimeField(
-        required=False,
-        widget=forms.TimeInput(attrs={"type": "time"}),
-    )
-
-    domingo = forms.BooleanField(
-        label="Domingo",
-        required=False,
-    )
-
-    domingo_inicio = forms.TimeField(
-        required=False,
-        widget=forms.TimeInput(attrs={"type": "time"}),
-    )
-
-    domingo_fim = forms.TimeField(
-        required=False,
-        widget=forms.TimeInput(attrs={"type": "time"}),
-    )
-
-    def clean(self):
-        cleaned_data = super().clean()
-
-        dias = [
+        dias_validos = {
             "segunda",
             "terca",
             "quarta",
@@ -142,23 +59,101 @@ class ConfiguracaoAgendaForm(forms.Form):
             "sexta",
             "sabado",
             "domingo",
-        ]
+        }
 
-        for dia in dias:
-            selecionado = cleaned_data.get(dia)
+        if not isinstance(dias, list):
+            raise forms.ValidationError(
+                "Os dias selecionados são inválidos."
+            )
 
-            if selecionado:
-                inicio = cleaned_data.get(f"{dia}_inicio")
-                fim = cleaned_data.get(f"{dia}_fim")
+        if not dias:
+            raise forms.ValidationError(
+                "Selecione pelo menos um dia da semana."
+            )
 
-                if not inicio or not fim:
-                    raise forms.ValidationError(
-                        f"Informe o horário de início e fim para {dia}."
-                    )
+        if not all(dia in dias_validos for dia in dias):
+            raise forms.ValidationError(
+                "Um dos dias selecionados é inválido."
+            )
 
-                if inicio >= fim:
-                    raise forms.ValidationError(
-                        f"O horário final de {dia} deve ser depois do horário inicial."
-                    )
+        return dias
 
-        return cleaned_data
+    def clean_horarios(self):
+        valor = self.cleaned_data.get("horarios", "")
+
+        if not valor:
+            raise forms.ValidationError(
+                "Adicione pelo menos um horário."
+            )
+
+        try:
+            horarios = json.loads(valor)
+        except json.JSONDecodeError:
+            raise forms.ValidationError(
+                "Os horários informados são inválidos."
+            )
+
+        if not isinstance(horarios, list) or not horarios:
+            raise forms.ValidationError(
+                "Adicione pelo menos um horário."
+            )
+
+        horarios_validos = []
+
+        for horario in horarios:
+            if not isinstance(horario, dict):
+                raise forms.ValidationError(
+                    "Formato de horário inválido."
+                )
+
+            valor_horario = horario.get("horario")
+
+            if not valor_horario:
+                raise forms.ValidationError(
+                    "Todos os horários precisam ser preenchidos."
+                )
+
+            horarios_validos.append({
+                "horario": valor_horario,
+            })
+
+        return horarios_validos
+
+
+class ConfiguracaoProfessorForm(forms.ModelForm):
+    class Meta:
+        model = Professor
+        fields = ["nome_exibicao"]
+        labels = {
+            "nome_exibicao": "Nome de exibição",
+        }
+
+
+class DisponibilidadeForm(forms.ModelForm):
+    class Meta:
+        model = DisponibilidadeProfessor
+        fields = ["dia_semana", "horario"]
+        labels = {
+            "dia_semana": "Dia da semana",
+            "horario": "Horário",
+        }
+
+
+class ExclusaoContaForm(forms.Form):
+    nome_exibicao = forms.CharField(
+        label="Digite seu nome de exibição para confirmar"
+    )
+
+    def __init__(self, *args, professor=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.professor = professor
+
+    def clean_nome_exibicao(self):
+        nome = self.cleaned_data["nome_exibicao"]
+
+        if nome != self.professor.nome_exibicao:
+            raise forms.ValidationError(
+                "O nome informado não corresponde ao seu nome de exibição."
+            )
+
+        return nome

@@ -1,18 +1,14 @@
 {% extends "base.html" %}
 
 {% block title %}
-    Configuração inicial - ClassPlanner
+    Configurações - ClassPlanner
 {% endblock %}
 
 {% block content %}
 
 <div class="container">
 
-    <h1>Configure sua agenda</h1>
-
-    <p>
-        Antes de começar, escolha como sua agenda vai funcionar.
-    </p>
+    <h1>Configurações</h1>
 
     <form method="post" id="configuracao-form">
 
@@ -24,22 +20,16 @@
 
             <h2>Nome de exibição</h2>
 
-            <p>
-                Esse é o nome que será usado no ClassPlanner.
-            </p>
-
             {{ form.nome_exibicao.errors }}
+
             {{ form.nome_exibicao }}
 
         </section>
 
+
         <section>
 
             <h2>Dias da semana</h2>
-
-            <p>
-                Selecione os dias que você utiliza para dar aulas.
-            </p>
 
             {{ form.dias.errors }}
 
@@ -77,13 +67,10 @@
 
         </section>
 
+
         <section>
 
-            <h2>Horários da agenda</h2>
-
-            <p>
-                Adicione os horários que aparecerão na sua agenda.
-            </p>
+            <h2>Horários</h2>
 
             {{ form.horarios.errors }}
 
@@ -98,48 +85,82 @@
 
         </section>
 
+
         {{ form.dias }}
         {{ form.horarios }}
 
+
         <button type="submit">
-            Salvar configuração
+            Salvar alterações
         </button>
 
     </form>
 
+
+    <section>
+
+        <h2>Excluir conta</h2>
+
+        <p>
+            A exclusão da conta é permanente e não poderá ser desfeita.
+        </p>
+
+        <a href="{% url 'excluir_conta' %}">
+            Excluir minha conta
+        </a>
+
+    </section>
+
 </div>
+
 
 <script>
 
 const diasSelecionados = [];
+
 const horarios = [];
+
+
+/* DIAS */
 
 document.querySelectorAll(".dia").forEach(botao => {
 
     botao.addEventListener("click", () => {
 
         const dia = botao.dataset.dia;
+
         const index = diasSelecionados.indexOf(dia);
 
         if (index === -1) {
 
             diasSelecionados.push(dia);
+
             botao.classList.add("selecionado");
 
         } else {
 
             diasSelecionados.splice(index, 1);
+
             botao.classList.remove("selecionado");
 
         }
 
-        document.getElementById("id_dias").value =
-            JSON.stringify(diasSelecionados);
+        atualizarCampoDias();
 
     });
 
 });
 
+
+function atualizarCampoDias() {
+
+    document.getElementById("id_dias").value =
+        JSON.stringify(diasSelecionados);
+
+}
+
+
+/* HORÁRIOS */
 
 function renderizarHorarios() {
 
@@ -159,12 +180,20 @@ function renderizarHorarios() {
                 type="time"
                 value="${horario.horario}"
                 data-index="${index}"
-                data-tipo="horario"
             >
 
             <button
                 type="button"
+                data-editar="${index}"
+                title="Editar horário"
+            >
+                ✏️
+            </button>
+
+            <button
+                type="button"
                 data-remover="${index}"
+                title="Remover horário"
             >
                 ×
             </button>
@@ -187,6 +216,8 @@ function atualizarCampoHorarios() {
 }
 
 
+/* ADICIONAR HORÁRIO */
+
 document
     .getElementById("adicionar-horario")
     .addEventListener("click", () => {
@@ -200,6 +231,8 @@ document
     });
 
 
+/* ALTERAR HORÁRIO */
+
 document
     .getElementById("horarios-container")
     .addEventListener("input", event => {
@@ -211,41 +244,81 @@ document
         }
 
         const index = Number(input.dataset.index);
-        const tipo = input.dataset.tipo;
 
-        horarios[index][tipo] = input.value;
+        horarios[index].horario = input.value;
 
         atualizarCampoHorarios();
 
     });
 
 
+/* REMOVER HORÁRIO */
+
 document
     .getElementById("horarios-container")
     .addEventListener("click", event => {
 
-        const index = event.target.dataset.remover;
+        const remover = event.target.dataset.remover;
 
-        if (index === undefined) {
+        if (remover === undefined) {
             return;
         }
 
-        horarios.splice(Number(index), 1);
+        horarios.splice(Number(remover), 1);
 
         renderizarHorarios();
 
     });
 
 
+/* DADOS EXISTENTES */
+
+const diasIniciais =
+    {{ form.initial.dias|default:"[]"|safe }};
+
+const horariosIniciais =
+    {{ form.initial.horarios|default:"[]"|safe }};
+
+
+diasIniciais.forEach(dia => {
+
+    diasSelecionados.push(dia);
+
+    const botao =
+        document.querySelector(
+            `.dia[data-dia="${dia}"]`
+        );
+
+    if (botao) {
+        botao.classList.add("selecionado");
+    }
+
+});
+
+
+horariosIniciais.forEach(horario => {
+
+    horarios.push({
+        horario: horario.horario
+    });
+
+});
+
+
+atualizarCampoDias();
+
+renderizarHorarios();
+
+
+/* ENVIO */
+
 document
     .getElementById("configuracao-form")
     .addEventListener("submit", () => {
 
-        document.getElementById("id_dias").value =
-            JSON.stringify(diasSelecionados);
+        atualizarCampoDias();
 
-        document.getElementById("id_horarios").value =
-            JSON.stringify(horarios);
+        atualizarCampoHorarios();
 
     });
 

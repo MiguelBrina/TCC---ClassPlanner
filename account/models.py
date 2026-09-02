@@ -27,7 +27,6 @@ class Professor(models.Model):
 
 
 class DisponibilidadeProfessor(models.Model):
-
     DIAS_SEMANA = [
         (0, "Segunda-feira"),
         (1, "Terça-feira"),
@@ -48,19 +47,17 @@ class DisponibilidadeProfessor(models.Model):
         choices=DIAS_SEMANA
     )
 
-    hora_inicio = models.TimeField()
-
-    hora_fim = models.TimeField()
+    horario = models.TimeField()
 
     class Meta:
-        ordering = ["dia_semana", "hora_inicio"]
+        ordering = ["dia_semana", "horario"]
+
         constraints = [
             models.UniqueConstraint(
                 fields=[
                     "professor",
                     "dia_semana",
-                    "hora_inicio",
-                    "hora_fim"
+                    "horario"
                 ],
                 name="unique_disponibilidade_professor"
             )
@@ -70,5 +67,5 @@ class DisponibilidadeProfessor(models.Model):
         return (
             f"{self.professor} - "
             f"{self.get_dia_semana_display()} - "
-            f"{self.hora_inicio} às {self.hora_fim}"
+            f"{self.horario}"
         )

@@ -2,27 +2,81 @@
 
 {% block content %}
 
-    <h1>Painel do Professor</h1>
+<div class="agenda-container">
 
-    <h2>ClassPlanner</h2>
 
-    <a href="#">
-        Alunos
+<h1>Agenda</h1>
+
+{% if dias %}
+
+    <div class="agenda-grid">
+
+        <!-- Cabeçalho -->
+        <div class="agenda-header agenda-horario">
+            Horário
+        </div>
+
+        {% for numero_dia, dia in dias.items %}
+            <div class="agenda-header">
+                {{ dia.nome }}
+            </div>
+        {% endfor %}
+
+
+        <!-- Horários -->
+        {% for horario in horarios %}
+
+            <div class="agenda-horario">
+                {{ horario|time:"H:i" }}
+            </div>
+
+            {% for numero_dia, dia in dias.items %}
+
+                <div class="agenda-cell">
+
+                    {% for aula in aulas %}
+
+                        {% if aula.horario == horario %}
+
+                            {% if aula.data.weekday == numero_dia %}
+
+                                <div class="aula">
+                                    <strong>
+                                        {{ aula.aluno.nome_completo }}
+                                    </strong>
+
+                                    <span>
+                                        {{ aula.disciplina.nome }}
+                                    </span>
+                                </div>
+
+                            {% endif %}
+
+                        {% endif %}
+
+                    {% endfor %}
+
+                </div>
+
+            {% endfor %}
+
+        {% endfor %}
+
+    </div>
+
+{% else %}
+
+    <p>
+        Sua agenda ainda não possui dias e horários configurados.
+    </p>
+
+    <a href="{% url 'configuracao_inicial' %}">
+        Configurar agenda
     </a>
 
-    <br>
+{% endif %}
 
-    <a href="#">
-        Disciplinas
-    </a>
 
-    <br>
-
-    <a href="#">
-        Agenda
-    </a>
-
-    <br>
-
+</div>
 
 {% endblock %}
