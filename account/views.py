@@ -99,6 +99,10 @@ def configuracoes(request):
         usuario=request.user
     )
 
+    form_exclusao = ExclusaoContaForm(
+    professor=professor
+    )
+
     disponibilidades = (
         professor.disponibilidades
         .all()
@@ -199,6 +203,7 @@ def configuracoes(request):
         {
             "form": form,
             "professor": professor,
+            "form_exclusao": form_exclusao,
         },
     )
 
@@ -231,9 +236,14 @@ def excluir_conta(request):
 
     return render(
         request,
-        "account/excluir_conta.html",
+        "account/configuracoes.html",
         {
-            "form": form,
-            "professor": professor,
+            "form": ConfiguracaoAgendaForm(
+                 initial={
+                    "nome_exibicao": professor.nome_exibicao,
+            }
+        ),
+        "form_exclusao": form,
+        "professor": professor,
         },
-    )
+)

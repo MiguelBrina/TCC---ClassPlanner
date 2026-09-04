@@ -105,16 +105,58 @@
             A exclusão da conta é permanente e não poderá ser desfeita.
         </p>
 
-        <a href="{% url 'excluir_conta' %}">
+        <button type="button" id="abrir-exclusao">
             Excluir minha conta
-        </a>
+        </button>
 
     </section>
 
 </div>
 
+<div id="modal-exclusao">
+
+    <div id="modal-conteudo">
+
+        <h2>Excluir conta</h2>
+
+        <p>
+            Essa ação é permanente e não poderá ser desfeita.
+        </p>
+
+        <p>
+            Para confirmar, digite exatamente seu nome de exibição.
+        </p>
+
+        <form method="post" action="{% url 'excluir_conta' %}">
+
+            {% csrf_token %}
+
+            {{ form_exclusao.as_p }}
+
+            <button type="button" id="cancelar-exclusao">
+                Cancelar
+            </button>
+
+            <button type="submit">
+                Excluir minha conta permanentemente
+            </button>
+
+        </form>
+
+    </div>
+
+</div>
 
 <script>
+const modalExclusao = document.getElementById("modal-exclusao");
+const abrirExclusao = document.getElementById("abrir-exclusao");
+const cancelarExclusao = document.getElementById("cancelar-exclusao");
+abrirExclusao.addEventListener("click", () =>{
+       modalExclusao.style.display = "block"
+});
+cancelarExclusao.addEventListener("click", () =>{
+       modalExclusao.style.display = "none"
+});
 
 const diasSelecionados = [];
 
