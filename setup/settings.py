@@ -1,24 +1,17 @@
 from pathlib import Path
 import os
 
-
-# ============================================================
 # CAMINHOS
-# ============================================================
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
-# ============================================================
 # URL DO AMBIENTE
-# ============================================================
 
 SITE_URL = SITE_URL = "https://potential-space-waffle-x5x4qqxrv4g5cv4wr-8000.app.github.dev"
 
 
-# ============================================================
 # SEGURANÇA BÁSICA
-# ============================================================
 
 SECRET_KEY = 'django-insecure-)%nm&!q2*xs_)8euokjzs)wah(6fl8-pol=t3j@_ku__8*ryd8'
 
@@ -56,10 +49,6 @@ SOCIALACCOUNT_PROVIDERS = {
     },
 }
 
-# ============================================================
-# APPLICATIONS
-# ============================================================
-
 INSTALLED_APPS = [
     "django.contrib.admin",
     "django.contrib.auth",
@@ -68,8 +57,6 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "django.contrib.sites",
-
-    # Apps do ClassPlanner
     "core",
     "account.apps.AccountConfig",
 
@@ -80,10 +67,7 @@ INSTALLED_APPS = [
     "allauth.socialaccount.providers.google",
 ]
 
-
-# ============================================================
 # MIDDLEWARE
-# ============================================================
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -97,27 +81,18 @@ MIDDLEWARE = [
     "allauth.account.middleware.AccountMiddleware",
 ]
 
-
-# ============================================================
 # AUTENTICAÇÃO
-# ============================================================
 
 AUTHENTICATION_BACKENDS = [
     "django.contrib.auth.backends.ModelBackend",
     "allauth.account.auth_backends.AuthenticationBackend",
 ]
 
-
-# ============================================================
 # DJANGO SITES
-# ============================================================
 
 SITE_ID = 1
 
-
-# ============================================================
 # CONFIGURAÇÕES DA CONTA
-# ============================================================
 
 ACCOUNT_LOGIN_METHODS = {"email"}
 
@@ -137,25 +112,17 @@ LOGIN_REDIRECT_URL = "/pos-login/"
 LOGOUT_REDIRECT_URL = "/"
 
 
-# ============================================================
 # E-MAIL
-# ============================================================
 
 # Desenvolvimento:
 # imprime os e-mails no terminal do Codespace/local.
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 
-
-# ============================================================
 # URLS
-# ============================================================
 
 ROOT_URLCONF = "setup.urls"
 
-
-# ============================================================
 # TEMPLATES
-# ============================================================
 
 TEMPLATES = [
     {
@@ -175,11 +142,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "setup.wsgi.application"
 
-
-# ============================================================
-# BANCO DE DADOS
-# ============================================================
-
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.sqlite3",
@@ -187,10 +149,7 @@ DATABASES = {
     }
 }
 
-
-# ============================================================
 # VALIDAÇÃO DE SENHAS
-# ============================================================
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -214,10 +173,6 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 
-# ============================================================
-# INTERNACIONALIZAÇÃO
-# ============================================================
-
 LANGUAGE_CODE = "pt-br"
 
 TIME_ZONE = "UTC"
@@ -226,11 +181,7 @@ USE_I18N = True
 
 USE_TZ = True
 
-
-# ============================================================
 # ARQUIVOS ESTÁTICOS
-# ============================================================
-
 
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [
