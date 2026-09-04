@@ -1,6 +1,9 @@
-1. python -m venv venv
-2. venv\Scripts\activate
-3. pip install -r requirements.txt  (já baixa tudo de uma vez)
-4. django-admin startproject meusite .
-5. python manage.py runserver
-6. deactivatess
+python -m venv venv
+venv\Scripts\activate
+pip install -r requirements.txt  (já baixa tudo de uma vez)
+pip install django-allauth
+pip install requests 
+python manage.py runserver
+deactivatess
+
+django-admin startproject meusite .

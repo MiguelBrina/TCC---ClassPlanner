@@ -3,34 +3,38 @@
 {% block title %}Criar Conta - ClassPlanner{% endblock %}
 
 {% block content %}
+
 <div class="flex-center" style="min-height: 70vh;">
     <div class="card" style="width: 100%; max-width: 420px;">
-        <h2 class="text-center" style="margin-bottom: 0.5rem;">Criar Conta</h2>
-        <p class="text-muted text-center" style="margin-bottom: 1.5rem;">Comece a organizar suas aulas hoje</p>
 
-        <form method="post">
-            {% csrf_token %}
-            <div style="margin-bottom: 1rem;">
-                <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Nome Completo</label>
-                <input type="text" name="nome" class="form-control" required placeholder="Seu nome">
-            </div>
 
-            <div style="margin-bottom: 1rem;">
-                <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">E-mail</label>
-                <input type="email" name="email" class="form-control" required placeholder="seu@email.com">
-            </div>
+    <h2 class="text-center" style="margin-bottom: 0.5rem;">
+        Criar Conta
+    </h2>
 
-            <div style="margin-bottom: 1.5rem;">
-                <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Senha</label>
-                <input type="password" name="password" class="form-control" required placeholder="Senha">
-            </div>
+    <p class="text-muted text-center" style="margin-bottom: 1.5rem;">
+        Comece a organizar suas aulas hoje
+    </p>
 
-            <button type="submit" class="btn btn-primary" style="width: 100%;">Criar Conta</button>
-        </form>
+    <form method="post">
+        {% csrf_token %}
 
-        <p class="text-muted text-center" style="margin-top: 1.5rem; font-size: 0.9rem;">
-            Já possui uma conta? <a href="{% url 'login' %}" style="text-decoration: underline;">Entrar</a>
-        </p>
-    </div>
+        {{ form.as_p }}
+
+        <button type="submit" class="btn btn-primary" style="width: 100%;">
+            Criar Conta
+        </button>
+    </form>
+
+    <p class="text-muted text-center" style="margin-top: 1.5rem; font-size: 0.9rem;">
+        Já possui uma conta?
+        <a href="{% url 'login' %}" style="text-decoration: underline;">
+            Entrar
+        </a>
+    </p>
+
+</div>
+
+
 </div>
 {% endblock %}

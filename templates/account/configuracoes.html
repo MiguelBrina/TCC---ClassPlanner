@@ -1,0 +1,327 @@
+{% extends "base.html" %}
+
+{% block title %}
+    Configurações - ClassPlanner
+{% endblock %}
+
+{% block content %}
+
+<div class="container">
+
+    <h1>Configurações</h1>
+
+    <form method="post" id="configuracao-form">
+
+        {% csrf_token %}
+
+        {{ form.non_field_errors }}
+
+        <section>
+
+            <h2>Nome de exibição</h2>
+
+            {{ form.nome_exibicao.errors }}
+
+            {{ form.nome_exibicao }}
+
+        </section>
+
+
+        <section>
+
+            <h2>Dias da semana</h2>
+
+            {{ form.dias.errors }}
+
+            <div id="dias-container">
+
+                <button type="button" class="dia" data-dia="segunda">
+                    Segunda
+                </button>
+
+                <button type="button" class="dia" data-dia="terca">
+                    Terça
+                </button>
+
+                <button type="button" class="dia" data-dia="quarta">
+                    Quarta
+                </button>
+
+                <button type="button" class="dia" data-dia="quinta">
+                    Quinta
+                </button>
+
+                <button type="button" class="dia" data-dia="sexta">
+                    Sexta
+                </button>
+
+                <button type="button" class="dia" data-dia="sabado">
+                    Sábado
+                </button>
+
+                <button type="button" class="dia" data-dia="domingo">
+                    Domingo
+                </button>
+
+            </div>
+
+        </section>
+
+
+        <section>
+
+            <h2>Horários</h2>
+
+            {{ form.horarios.errors }}
+
+            <div id="horarios-container"></div>
+
+            <button
+                type="button"
+                id="adicionar-horario"
+            >
+                + Adicionar horário
+            </button>
+
+        </section>
+
+
+        {{ form.dias }}
+        {{ form.horarios }}
+
+
+        <button type="submit">
+            Salvar alterações
+        </button>
+
+    </form>
+
+
+    <section>
+
+        <h2>Excluir conta</h2>
+
+        <p>
+            A exclusão da conta é permanente e não poderá ser desfeita.
+        </p>
+
+        <a href="{% url 'excluir_conta' %}">
+            Excluir minha conta
+        </a>
+
+    </section>
+
+</div>
+
+
+<script>
+
+const diasSelecionados = [];
+
+const horarios = [];
+
+
+/* DIAS */
+
+document.querySelectorAll(".dia").forEach(botao => {
+
+    botao.addEventListener("click", () => {
+
+        const dia = botao.dataset.dia;
+
+        const index = diasSelecionados.indexOf(dia);
+
+        if (index === -1) {
+
+            diasSelecionados.push(dia);
+
+            botao.classList.add("selecionado");
+
+        } else {
+
+            diasSelecionados.splice(index, 1);
+
+            botao.classList.remove("selecionado");
+
+        }
+
+        atualizarCampoDias();
+
+    });
+
+});
+
+
+function atualizarCampoDias() {
+
+    document.getElementById("id_dias").value =
+        JSON.stringify(diasSelecionados);
+
+}
+
+
+/* HORÁRIOS */
+
+function renderizarHorarios() {
+
+    const container =
+        document.getElementById("horarios-container");
+
+    container.innerHTML = "";
+
+    horarios.forEach((horario, index) => {
+
+        const linha = document.createElement("div");
+
+        linha.className = "horario";
+
+        linha.innerHTML = `
+            <input
+                type="time"
+                value="${horario.horario}"
+                data-index="${index}"
+            >
+
+            <button
+                type="button"
+                data-editar="${index}"
+                title="Editar horário"
+            >
+                ✏️
+            </button>
+
+            <button
+                type="button"
+                data-remover="${index}"
+                title="Remover horário"
+            >
+                ×
+            </button>
+        `;
+
+        container.appendChild(linha);
+
+    });
+
+    atualizarCampoHorarios();
+
+}
+
+
+function atualizarCampoHorarios() {
+
+    document.getElementById("id_horarios").value =
+        JSON.stringify(horarios);
+
+}
+
+
+/* ADICIONAR HORÁRIO */
+
+document
+    .getElementById("adicionar-horario")
+    .addEventListener("click", () => {
+
+        horarios.push({
+            horario: ""
+        });
+
+        renderizarHorarios();
+
+    });
+
+
+/* ALTERAR HORÁRIO */
+
+document
+    .getElementById("horarios-container")
+    .addEventListener("input", event => {
+
+        const input = event.target;
+
+        if (input.dataset.index === undefined) {
+            return;
+        }
+
+        const index = Number(input.dataset.index);
+
+        horarios[index].horario = input.value;
+
+        atualizarCampoHorarios();
+
+    });
+
+
+/* REMOVER HORÁRIO */
+
+document
+    .getElementById("horarios-container")
+    .addEventListener("click", event => {
+
+        const remover = event.target.dataset.remover;
+
+        if (remover === undefined) {
+            return;
+        }
+
+        horarios.splice(Number(remover), 1);
+
+        renderizarHorarios();
+
+    });
+
+
+/* DADOS EXISTENTES */
+
+const diasIniciais =
+    {{ form.initial.dias|default:"[]"|safe }};
+
+const horariosIniciais =
+    {{ form.initial.horarios|default:"[]"|safe }};
+
+
+diasIniciais.forEach(dia => {
+
+    diasSelecionados.push(dia);
+
+    const botao =
+        document.querySelector(
+            `.dia[data-dia="${dia}"]`
+        );
+
+    if (botao) {
+        botao.classList.add("selecionado");
+    }
+
+});
+
+
+horariosIniciais.forEach(horario => {
+
+    horarios.push({
+        horario: horario.horario
+    });
+
+});
+
+
+atualizarCampoDias();
+
+renderizarHorarios();
+
+
+/* ENVIO */
+
+document
+    .getElementById("configuracao-form")
+    .addEventListener("submit", () => {
+
+        atualizarCampoDias();
+
+        atualizarCampoHorarios();
+
+    });
+
+</script>
+
+{% endblock %}

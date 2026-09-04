@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h1>Confira seu e-mail</h1>
+
+<p>
+    Se existir uma conta associada ao e-mail informado,
+    enviaremos as instruções para redefinir sua senha.
+</p>
+
+<a href="{% url 'login' %}">
+    Voltar para o login
+</a>
+
+{% endblock %}
