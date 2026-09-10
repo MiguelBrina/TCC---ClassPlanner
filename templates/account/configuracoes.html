@@ -151,6 +151,11 @@
 const modalExclusao = document.getElementById("modal-exclusao");
 const abrirExclusao = document.getElementById("abrir-exclusao");
 const cancelarExclusao = document.getElementById("cancelar-exclusao");
+
+{% if form_exclusao.errors %}
+    modalExclusao.style.display = "block";
+{% endif %}
+
 abrirExclusao.addEventListener("click", () =>{
        modalExclusao.style.display = "block"
 });

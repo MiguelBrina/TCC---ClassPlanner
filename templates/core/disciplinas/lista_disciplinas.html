@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block title %}
+    Disciplinas 
+{% endblock %}
+
+{% block content %}
+    <form method="post">
+        {% csrf_token %}
+
+        {{ form.as_p }}
+
+        <button type="submit">
+            Adicionar disciplina
+        </button>
+    </form>
+
+        <h2>Disciplinas cadastradas</h2>
+
+        <ul>
+            {% for disciplina in disciplinas %}
+                <li>
+                {{ disciplina.nome }}
+                </li>
+            {% empty %}
+                <li>Nenhuma disciplina cadastrada.</li>
+            {% endfor %}
+        </ul>
+
+{% endblock %}
