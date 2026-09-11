@@ -20,11 +20,13 @@
         <ul>
             {% for disciplina in disciplinas %}
                 <li>
-                {{ disciplina.nome }}
+                    <a href="{% url 'lista_temas' disciplina.id %}">{{ disciplina.nome}}</a>
                 </li>
             {% empty %}
                 <li>Nenhuma disciplina cadastrada.</li>
             {% endfor %}
         </ul>
+
+        
 
 {% endblock %}

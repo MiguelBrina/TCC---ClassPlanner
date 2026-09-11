@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block title %}
+    Temas de {{ disciplina.nome }} - ClassPlanner
+{% endblock %}
+
+{% block content %}
+
+    <p>
+        <a href="{% url 'lista_disciplin      Voltar para disciplinas
+        </a>
+    </p>
+    <h2>Adicionar tema</h2>
+
+    <form method="post">
+        {% csrf_token %}
+
+        {{ form.as_p }}
+
+        <button type="submit">
+            Adicionar tema
+        </button>
+    </form>
+    <h2>Temas cadastrados</h2>
+
+    <ul>
+        {% for tema in temas %}
+            <li>
+                {{ tema.nome }}
+            </li>
+        {% empty %}
+            <li>Nenhum tema cadastrado nesta disciplina.</li>
+        {% endfor %}
+    </ul>
+{% endblock %}

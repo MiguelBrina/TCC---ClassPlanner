@@ -1,7 +1,8 @@
 from django.contrib.auth.decorators import login_required
-from django.shortcuts import render, redirect
-from .forms import DisciplinaForm
-from .models import Aula,Disciplina
+from django.shortcuts import get_object_or_404, redirect, render
+
+from .forms import DisciplinaForm, TemaForm
+from .models import Aula, Disciplina,Tema
 
 
 def index(request):
@@ -66,7 +67,7 @@ def painel(request):
         contexto,
     )
 
-#Disciplinas temas e conteudos crud simples
+#region Disciplinas temas e conteudos crud simples
 @login_required
 def lista_disciplinas(request):
     professor = request.user.professor 
@@ -93,5 +94,42 @@ def lista_disciplinas(request):
         {
         "form": form,
         "disciplinas": disciplinas,
+        },
+    )
+
+@login_required
+def lista_temas(request, disciplina_id):
+    professor = request.user.professor
+
+    disciplina = get_object_or_404(
+        Disciplina,
+        id=disciplina_id,
+        professor=professor,
+    )
+    temas = disciplina.temas.all().order_by("nome")
+
+    if request.method == "POST":
+        form = TemaForm(request.POST)
+
+        if form.is_valid():
+            tema = form.save(commit=False)
+            tema.disciplina = disciplina
+            tema.save()
+
+            return redirect(
+                "lista_temas",
+                 disciplina_id=disciplina.id,
+            )
+
+    else:
+        form = TemaForm()
+
+    return render(
+        request,
+        "core/temas/lista_temas.html",
+        {
+            "disciplina": disciplina,
+            "temas": temas,
+            "form": form,
         },
     )
