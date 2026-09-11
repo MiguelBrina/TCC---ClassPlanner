@@ -3,8 +3,9 @@ from django.shortcuts import render, redirect
 from .forms import DisciplinaForm
 from .models import Aula,Disciplina
 from django.shortcuts import render, redirect, get_object_or_404
-#from django.shortcuts import render, redirect, get_object_or_404
-from .models import Disciplina, Professor
+
+from .models import Disciplina
+from account .models import Professor
 
 def index(request):
     if request.user.is_authenticated:
@@ -69,33 +70,35 @@ def painel(request):
     )
 
 #Disciplinas temas e conteudos crud simples
+
 @login_required
 def lista_disciplinas(request):
-    professor = get_object_or_404(Professor, user=request.user)
+    professor = request.user.professor 
+
+    disciplinas = Disciplina.objects.filter(
+        professor = professor 
+    ).order_by("nome")  
 
     if request.method == "POST":
-        disciplina_id = request.POST.get("id")
-        nome = request.POST.get("nome")
-        cor = request.POST.get("cor", "#3b82f6")
+        form = DisciplinaForm(request.POST)
 
-        if disciplina_id:
-            # EDITAR
-            disciplina = get_object_or_404(Disciplina, pk=disciplina_id, professor=professor)
-            disciplina.nome = nome
-            disciplina.cor = cor
+        if form.is_valid():
+            disciplina = form.save(commit=False)
+            disciplina.professor = professor
             disciplina.save()
-        else:
-            # ADICIONAR NOVA
-            Disciplina.objects.create(
-                professor=professor,
-                nome=nome,
-                cor=cor
-            )
 
-        return redirect("lista_disciplinas")
+            return redirect("lista_disciplinas")
+    else:
+        form = DisciplinaForm()
 
-    disciplinas = Disciplina.objects.filter(professor=professor)
-    return render(request, "core/disciplinas/lista_disciplinas.html", {"disciplinas": disciplinas})
+    return render(
+        request,
+        "core/disciplinas/lista_disciplinas.html",
+        {
+        "form": form,
+        "disciplinas": disciplinas,
+        },
+    )   
 
 
 @login_required

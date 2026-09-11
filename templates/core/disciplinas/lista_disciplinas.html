@@ -30,12 +30,12 @@
                 <!-- Botões de Ação (Editar e Excluir) -->
                 <div class="disciplina-actions">
                     <button type="button" class="btn-icon" onclick="editDisciplina('{{ disciplina.id }}', '{{ disciplina.nome|escapejs }}', '{{ disciplina.cor }}')" title="Editar">
-                        ✏️
+                        Ed
                     </button>
                     <form method="POST" action="{% url 'excluir_disciplina' disciplina.id %}" style="display: inline;" onsubmit="return confirm('Deseja realmente excluir esta disciplina?');">
                         {% csrf_token %}
                         <button type="submit" class="btn-icon" title="Excluir">
-                            🗑️
+                            Ex
                         </button>
                     </form>
                 </div>
@@ -77,6 +77,7 @@
     </div>
 </div>
 
+<!-- JavaScript -->
 <script>
     function openModal() {
         document.getElementById('modalTitle').innerText = 'Nova Disciplina';
