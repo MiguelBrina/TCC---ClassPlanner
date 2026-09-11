@@ -2,7 +2,9 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect
 from .forms import DisciplinaForm
 from .models import Aula,Disciplina
-
+from django.shortcuts import render, redirect, get_object_or_404
+#from django.shortcuts import render, redirect, get_object_or_404
+from .models import Disciplina, Professor
 
 def index(request):
     if request.user.is_authenticated:
@@ -69,29 +71,36 @@ def painel(request):
 #Disciplinas temas e conteudos crud simples
 @login_required
 def lista_disciplinas(request):
-    professor = request.user.professor 
-
-    disciplinas = Disciplina.objects.filter(
-        professor = professor 
-    ).order_by("nome")  
+    professor = get_object_or_404(Professor, user=request.user)
 
     if request.method == "POST":
-        form = DisciplinaForm(request.POST)
+        disciplina_id = request.POST.get("id")
+        nome = request.POST.get("nome")
+        cor = request.POST.get("cor", "#3b82f6")
 
-        if form.is_valid():
-            disciplina = form.save(commit=False)
-            disciplina.professor = professor
+        if disciplina_id:
+            # EDITAR
+            disciplina = get_object_or_404(Disciplina, pk=disciplina_id, professor=professor)
+            disciplina.nome = nome
+            disciplina.cor = cor
             disciplina.save()
+        else:
+            # ADICIONAR NOVA
+            Disciplina.objects.create(
+                professor=professor,
+                nome=nome,
+                cor=cor
+            )
 
-            return redirect("lista_disciplinas")
-    else:
-        form = DisciplinaForm()
+        return redirect("lista_disciplinas")
 
-    return render(
-        request,
-        "core/disciplinas/lista_disciplinas.html",
-        {
-        "form": form,
-        "disciplinas": disciplinas,
-        },
-    )
+    disciplinas = Disciplina.objects.filter(professor=professor)
+    return render(request, "core/disciplinas/lista_disciplinas.html", {"disciplinas": disciplinas})
+
+
+@login_required
+def excluir_disciplina(request, pk):
+    if request.method == "POST":
+        disciplina = get_object_or_404(Disciplina, pk=pk, professor__user=request.user)
+        disciplina.delete()
+    return redirect("lista_disciplinas")

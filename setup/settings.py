@@ -104,7 +104,7 @@ ACCOUNT_SIGNUP_FIELDS = [
 
 ACCOUNT_SIGNUP_FORM_CLASS = "account.forms.FormularioCadastro"
 
-ACCOUNT_EMAIL_VERIFICATION = "mandatory"
+ACCOUNT_EMAIL_VERIFICATION = "none" # Mudar para "none" quando desenvolvimento local, caso não "mandatory"
 
 
 # Redirecionamentos

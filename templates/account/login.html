@@ -25,7 +25,7 @@
 
         <div style="margin-bottom: 1rem;">
             <label for="{{ form.username.id_for_label }}"
-                   style="display: block; margin-bottom: 0.5rem; font-weight: 500;">
+                style="display: block; margin-bottom: 0.5rem; font-weight: 500;">
                 E-mail
             </label>
 
@@ -41,7 +41,7 @@
 
         <div style="margin-bottom: 1.5rem;">
             <label for="{{ form.password.id_for_label }}"
-                   style="display: block; margin-bottom: 0.5rem; font-weight: 500;">
+                style="display: block; margin-bottom: 0.5rem; font-weight: 500;">
                 Senha
             </label>
 
@@ -60,15 +60,7 @@
         </button>
     </form>
 
-    {% load socialaccount %}
-
-    <div style="margin-top: 1rem;">
-        <a href="{% provider_login_url 'google' %}"
-           class="btn btn-outline"
-           style="width: 100%;">
-            Entrar com Google
-        </a>
-    </div>
+    
 
     <p class="text-muted text-center" style="margin-top: 1.5rem; font-size: 0.9rem;">
         Ainda não tem conta?
