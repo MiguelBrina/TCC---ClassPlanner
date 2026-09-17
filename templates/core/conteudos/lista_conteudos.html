@@ -1,1 +1,57 @@
-Mostrar todas a entidades
+Mostrar todas a entidades{% extends "base.html" %}
+
+{% block title %}
+Conteúdos de {{ tema.nome }} - ClassPlanner
+{% endblock %}
+
+{% block content %}
+
+<div class="container">
+
+
+<p>
+    <a href="{% url 'lista_temas' tema.disciplina.id %}">
+        Voltar para temas
+    </a>
+</p>
+
+<h1>{{ tema.nome }}</h1>
+
+<h2>Adicionar conteúdo</h2>
+
+<form method="post">
+
+    {% csrf_token %}
+
+    {{ form.as_p }}
+
+    <button type="submit">
+        Adicionar conteúdo
+    </button>
+
+</form>
+
+<h2>Conteúdos cadastrados</h2>
+
+<ul>
+
+    {% for conteudo in conteudos %}
+
+        <li>
+            {{ conteudo.nome }}
+        </li>
+
+    {% empty %}
+
+        <li>
+            Nenhum conteúdo cadastrado neste tema.
+        </li>
+
+    {% endfor %}
+
+</ul>
+
+
+</div>
+
+{% endblock %}

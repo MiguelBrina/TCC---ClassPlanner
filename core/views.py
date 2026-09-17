@@ -1,7 +1,7 @@
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, redirect, render
 
-from .forms import DisciplinaForm, TemaForm
+from .forms import DisciplinaForm, TemaForm,ConteudoForm
 from .models import Aula, Disciplina,Tema
 
 
@@ -130,6 +130,43 @@ def lista_temas(request, disciplina_id):
         {
             "disciplina": disciplina,
             "temas": temas,
+            "form": form,
+        },
+    )
+
+@login_required
+def lista_conteudos(request, tema_id):
+    professor = request.user.professor
+
+    tema = get_object_or_404(
+    Tema,
+    id=tema_id,
+    disciplina__professor=professor,
+    )
+    conteudos =tema.conteudos.all().order_by("nome")
+
+    if request.method == "POST":
+        form = ConteudoForm(request.POST)
+
+        if form.is_valid():
+            conteudo = form.save(commit=False)
+            conteudo.tema= tema
+            conteudo.save()
+
+            return redirect(
+                "lista_conteudos",
+                tema_id=tema.id,
+            )
+
+    else:
+        form = ConteudoForm()
+
+    return render(
+        request,
+        "core/conteudos/lista_conteudos.html",
+        {
+            "tema": tema,
+            "conteudos": conteudos,
             "form": form,
         },
     )

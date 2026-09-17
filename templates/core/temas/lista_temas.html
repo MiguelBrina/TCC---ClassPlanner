@@ -7,9 +7,9 @@
 {% block content %}
 
     <p>
-        <a href="{% url 'lista_disciplin      Voltar para disciplinas
-        </a>
+        <a href="{% url 'lista_disciplinas' %}">Voltar para disciplinas</a>
     </p>
+
     <h2>Adicionar tema</h2>
 
     <form method="post">
@@ -26,7 +26,7 @@
     <ul>
         {% for tema in temas %}
             <li>
-                {{ tema.nome }}
+                 <a href="{% url 'lista_conteudos' tema.id %}">{{ tema.nome}}</a>
             </li>
         {% empty %}
             <li>Nenhum tema cadastrado nesta disciplina.</li>
