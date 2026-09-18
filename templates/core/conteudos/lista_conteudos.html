@@ -1,1 +1,46 @@
-Mostrar todas a entidades
+{% extends "base.html" %}
+
+{% block title %}Conteúdos de {{ tema.nome }}{% endblock %}
+
+{% block content %}
+    <header>
+        <h1>Conteúdos do Tema: {{ tema.nome }}</h1>
+        <p>Disciplina: {{ tema.disciplina.nome }}</p>
+        <!-- Botão de voltar para os temas específicos dessa disciplina -->
+        <a href="{% url 'lista_temas' tema.disciplina.id %}">⬅ Voltar para Temas</a>
+    </header>
+
+    <hr>
+
+    <!-- LISTA DE CONTEÚDOS -->
+    <section>
+        <h2>Lista de Conteúdos</h2>
+        <ul>
+            {% for conteudo in conteudos %}
+                <li>
+                    <strong>{{ conteudo.nome }}</strong> 
+                    <p>{{ conteudo.descricao }}</p>
+                    <a href="#">[Editar]</a> 
+                    <a href="#">[Excluir]</a>
+                </li>
+            {% empty %}
+                <li>Nenhum conteúdo cadastrado para este tema ainda.</li>
+            {% endfor %}
+        </ul>
+    </section>
+
+    <hr>
+
+    <!-- FORMULÁRIO PARA CRIAR NOVO CONTEÚDO -->
+    <section>
+        <h2>+ Novo Conteúdo</h2>
+        <!-- O action aponta para a própria página, enviando o ID do tema atual -->
+        <form method="POST" action="{% url 'lista_conteudos' tema.id %}">
+            {% csrf_token %}
+            
+            {{ form.as_p }}
+            
+            <button type="submit">Salvar Conteúdo</button>
+        </form>
+    </section>
+{% endblock %}

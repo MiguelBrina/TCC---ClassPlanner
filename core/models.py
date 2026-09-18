@@ -46,7 +46,7 @@ class Aluno(models.Model):
         on_delete=models.CASCADE,
         related_name="alunos"
     )
-     
+    
     nome_completo = models.CharField(max_length=150, null=False, blank = False)
     telefone = models.CharField(max_length=20)
    
