@@ -5,19 +5,17 @@
 {% block content %}
     <header>
         <h1>Temas da Disciplina: {{ disciplina.nome }}</h1>
-        <!-- Botão super importante para o usuário não ficar preso -->
         <a href="{% url 'lista_disciplinas' %}">⬅ Voltar para Disciplinas</a>
     </header>
 
     <hr>
 
-    <!-- LISTA DE TEMAS -->
+    
     <section>
         <h2>Lista de Temas</h2>
         <ul>
             {% for tema in temas %}
                 <li>
-                    <!-- Este link leva o usuário para a 3ª camada: Os conteúdos -->
                     <a href="{% url 'lista_conteudos' tema.id %}">
                         <strong>{{ tema.nome }}</strong>
                     </a>
@@ -35,12 +33,9 @@
 
     <section>
         <h2>+ Novo Tema</h2>
-        <!-- O formulário envia o POST para a própria URL de temas -->
         <form method="POST" action="{% url 'lista_temas' disciplina.id %}">
             {% csrf_token %}
             
-            <!-- Se você já criou um TemaForm e enviou pela view, basta usar {{ form.as_p }} -->
-            <!-- Se não, use o input manual abaixo: -->
             <div>
                 <label for="nome">Nome do Tema:</label>
                 <input type="text" id="nome" name="nome" required>
