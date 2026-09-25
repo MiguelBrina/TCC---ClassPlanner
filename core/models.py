@@ -2,6 +2,7 @@ from django.db import models
 
 #region hierarquia de ensino 
 class Disciplina(models.Model):
+    
     professor = models.ForeignKey(
         "conta.Professor",
         on_delete=models.CASCADE,
@@ -12,6 +13,14 @@ class Disciplina(models.Model):
 
     def __str__(self):
         return self.nome
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["professor", "nome"],
+                name="unique_disciplina_professor_nome",
+                ),
+        ]
 
 class Tema(models.Model):
     disciplina = models.ForeignKey(
@@ -24,6 +33,15 @@ class Tema(models.Model):
 
     def __str__(self):
         return self.nome
+    
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["disciplina", "nome"],
+                name="unique_tema_disciplina_nome",
+                ),
+        ]
+
 
 class Conteudo(models.Model):
     tema = models.ForeignKey(
@@ -36,6 +54,14 @@ class Conteudo(models.Model):
 
     def __str__(self):
         return self.nome
+    
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["tema", "nome"],
+                name="unique_conteudo_tema_nome",
+                ),
+        ]
 
 #endregion
 

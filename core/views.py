@@ -1,4 +1,5 @@
 from django.contrib.auth.decorators import login_required
+from django.db import IntegrityError
 from django.shortcuts import get_object_or_404, redirect, render
 
 from .forms import DisciplinaForm, TemaForm,ConteudoForm
@@ -77,14 +78,24 @@ def lista_disciplinas(request):
     ).order_by("nome")  
 
     if request.method == "POST":
-        form = DisciplinaForm(request.POST)
+        
+            form = DisciplinaForm(request.POST)
 
-        if form.is_valid():
-            disciplina = form.save(commit=False)
-            disciplina.professor = professor
-            disciplina.save()
+            if form.is_valid():
+                disciplina = form.save(commit=False)
+                disciplina.professor = professor
+            try:
 
-            return redirect("lista_disciplinas")
+                disciplina.save()
+
+                return redirect("lista_disciplinas")
+            
+            except IntegrityError:
+                form.add_error(
+                "nome", 
+                "Já existe uma disciplina com este nome"
+                )
+
     else:
         form = DisciplinaForm()
 
@@ -114,12 +125,20 @@ def lista_temas(request, disciplina_id):
         if form.is_valid():
             tema = form.save(commit=False)
             tema.disciplina = disciplina
+        try:
+
             tema.save()
 
             return redirect(
                 "lista_temas",
                  disciplina_id=disciplina.id,
             )
+        
+        except IntegrityError:
+                form.add_error(
+                "nome", 
+                "Já existe um tema com este nome"
+                )
 
     else:
         form = TemaForm()
@@ -151,12 +170,18 @@ def lista_conteudos(request, tema_id):
         if form.is_valid():
             conteudo = form.save(commit=False)
             conteudo.tema= tema
+        try:
             conteudo.save()
 
             return redirect(
                 "lista_conteudos",
                 tema_id=tema.id,
             )
+        except IntegrityError:
+                form.add_error(
+                "nome", 
+                "Já existe um conteúdo com este nome"
+                )
 
     else:
         form = ConteudoForm()
