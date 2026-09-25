@@ -5,60 +5,54 @@
 {% block content %}
     <header>
         <h1>Disciplinas</h1>
-        <p>Gerencie suas disciplinas e clique no nome para ver os temas.</p>
+        <p class="text-muted">Gerencie suas disciplinas e clique no nome para ver os temas.</p>
     </header>
 
     <hr>
 
-    <!-- LISTA DE DISCIPLINAS -->
     <section>
         <h2>Suas Disciplinas</h2>
-        <ul>
+        
+        <div class="grid-3">
             {% for disciplina in disciplinas %}
-                <li>
-
-                    <a href="{% url 'lista_temas' disciplina.id %}">
-                        <strong>{{ disciplina.nome }}</strong>
-                    </a> 
-                    (Cor: {{ disciplina.cor|default:'#3b82f6' }})
-
-                    <a href="{% url 'editar_disciplina' disciplina.id %}">
-                        [Editar]
-                    </a>
-
-                    <!-- Botão de Excluir (Mantido como form, pois deletar DEVE ser via POST) -->
-                    <form method="POST" action="{% url 'excluir_disciplina' disciplina.id %}" style="display: inline;">
+                <div class="card">
+                    <h3 class="card-title">
+                        <a href="{% url 'lista_temas' disciplina.id %}">{{ disciplina.nome }}</a>
+                    </h3>
+                    <p class="text-muted">Cor: {{ disciplina.cor|default:'#3b82f6' }}</p>
+                    
+                    <a href="#" class="btn btn-outline">Editar</a> <!-- tem que ver isso aqui cara!-->>
+                    
+                    <form method="POST" action="#" style="display:inline;"> <!-- tem que ver isso aqui cara!-->>
                         {% csrf_token %}
-                        <button type="submit" onclick="return confirm('Tem certeza?');">
-                            [Excluir]
-                        </button>
+                        <button type="submit" class="btn btn-outline" onclick="return confirm('Tem certeza?');">Excluir</button>
                     </form>
-                </li>
+                </div>
             {% empty %}
-                <li>Nenhuma disciplina cadastrada ainda.</li>
+                <p>Nenhuma disciplina cadastrada ainda.</p>
             {% endfor %}
-        </ul>
+        </div>
     </section>
 
     <hr>
 
-    <section>
-        <h2>+ Nova Disciplina</h2>
-        <!-- Supondo que a mesma view que lista, também receba o POST de criar -->
+    <section class="card">
+        <h2 class="card-title">+ Nova Disciplina</h2>
+        
         <form method="POST" action="{% url 'lista_disciplinas' %}">
             {% csrf_token %}
             
-            <div>
+            <p>
                 <label for="nome">Nome da Disciplina:</label>
-                <input type="text" id="nome" name="nome" required>
-            </div>
+                <input type="text" id="nome" name="nome" class="form-control" required>
+            </p>
 
-            <div>
+            <p>
                 <label for="cor">Cor de Identificação:</label>
-                <input type="color" id="cor" name="cor" value="#3b82f6">
-            </div>
+                <input type="color" id="cor" name="cor" value="#3b82f6" class="form-control">
+            </p>
 
-            <button type="submit">Salvar Disciplina</button>
+            <button type="submit" class="btn btn-primary">Salvar Disciplina</button>
         </form>
     </section>
 {% endblock %}

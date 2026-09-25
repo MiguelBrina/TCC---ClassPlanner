@@ -5,49 +5,48 @@
 {% block content %}
     <header>
         <h1>Temas da Disciplina: {{ disciplina.nome }}</h1>
-        <!-- Botão super importante para o usuário não ficar preso -->
-        <a href="{% url 'lista_disciplinas' %}">⬅ Voltar para Disciplinas</a>
+        <p>
+            <a href="{% url 'lista_disciplinas' %}" class="btn btn-outline">⬅ Voltar para Disciplinas</a>
+        </p>
     </header>
 
     <hr>
 
-    <!-- LISTA DE TEMAS -->
     <section>
         <h2>Lista de Temas</h2>
-        <ul>
+        
+        <div class="grid-3">
             {% for tema in temas %}
-                <li>
-                    <!-- Este link leva o usuário para a 3ª camada: Os conteúdos -->
-                    <a href="{% url 'lista_conteudos' tema.id %}">
-                        <strong>{{ tema.nome }}</strong>
-                    </a>
-
-                    <a href="#">[Editar]</a> 
-                    <a href="#">[Excluir]</a>
-                </li>
+                <div class="card">
+                    <h3 class="card-title">
+                        <a href="{% url 'lista_conteudos' tema.id %}">{{ tema.nome }}</a>
+                    </h3>
+                    
+                    <p>
+                        <a href="#" class="btn btn-outline">Editar</a> 
+                        <a href="#" class="btn btn-outline">Excluir</a>
+                    </p>
+                </div>
             {% empty %}
-                <li>Nenhum tema cadastrado nesta disciplina ainda.</li>
+                <p>Nenhum tema cadastrado nesta disciplina ainda.</p>
             {% endfor %}
-        </ul>
+        </div>
     </section>
 
     <hr>
 
-    <section>
-        <h2>+ Novo Tema</h2>
-        <!-- O formulário envia o POST para a própria URL de temas -->
+    <section class="card">
+        <h2 class="card-title">+ Novo Tema</h2>
+        
         <form method="POST" action="{% url 'lista_temas' disciplina.id %}">
             {% csrf_token %}
             
-            <!-- Se você já criou um TemaForm e enviou pela view, basta usar {{ form.as_p }} -->
-            <!-- Se não, use o input manual abaixo: -->
-            <div>
+            <p>
                 <label for="nome">Nome do Tema:</label>
-                <input type="text" id="nome" name="nome" required>
-            </div>
+                <input type="text" id="nome" name="nome" class="form-control" required>
+            </p>
             
-            <br>
-            <button type="submit">Salvar Tema</button>
+            <button type="submit" class="btn btn-primary">Salvar Tema</button>
         </form>
     </section>
 {% endblock %}
