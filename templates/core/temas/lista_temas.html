@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 
+<<<<<<< HEAD
 {% block title %}
     Temas de {{ disciplina.nome }} - ClassPlanner
 {% endblock %}
@@ -32,4 +33,55 @@
             <li>Nenhum tema cadastrado nesta disciplina.</li>
         {% endfor %}
     </ul>
+=======
+{% block title %}Temas de {{ disciplina.nome }}{% endblock %}
+
+{% block content %}
+    <header>
+        <h1>Temas da Disciplina: {{ disciplina.nome }}</h1>
+        <p>
+            <a href="{% url 'lista_disciplinas' %}" class="btn btn-outline">⬅ Voltar para Disciplinas</a>
+        </p>
+    </header>
+
+    <hr>
+
+    <section>
+        <h2>Lista de Temas</h2>
+        
+        <div class="grid-3">
+            {% for tema in temas %}
+                <div class="card">
+                    <h3 class="card-title">
+                        <a href="{% url 'lista_conteudos' tema.id %}">{{ tema.nome }}</a>
+                    </h3>
+                    
+                    <p>
+                        <a href="#" class="btn btn-outline">Editar</a> 
+                        <a href="#" class="btn btn-outline">Excluir</a>
+                    </p>
+                </div>
+            {% empty %}
+                <p>Nenhum tema cadastrado nesta disciplina ainda.</p>
+            {% endfor %}
+        </div>
+    </section>
+
+    <hr>
+
+    <section class="card">
+        <h2 class="card-title">+ Novo Tema</h2>
+        
+        <form method="POST" action="{% url 'lista_temas' disciplina.id %}">
+            {% csrf_token %}
+            
+            <p>
+                <label for="nome">Nome do Tema:</label>
+                <input type="text" id="nome" name="nome" class="form-control" required>
+            </p>
+            
+            <button type="submit" class="btn btn-primary">Salvar Tema</button>
+        </form>
+    </section>
+>>>>>>> wip/fix_telas
 {% endblock %}

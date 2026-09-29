@@ -1,10 +1,11 @@
 from django.contrib.auth.decorators import login_required
+from django.shortcuts import render, redirect
+from .forms import DisciplinaForm, AulaForm, TemaForm, AlunoForm, ConteudoForm, RegistroForm, MatriculaForm, PagamentoForm, DiarioDeBordoForm
+from .models import Aula, Disciplina, Tema, Conteudo
+from django.shortcuts import render, redirect, get_object_or_404
 from django.db import IntegrityError
 from django.shortcuts import get_object_or_404, redirect, render
-
-from .forms import DisciplinaForm, TemaForm,ConteudoForm
-from .models import Aula, Disciplina,Tema
-
+from account .models import Professor
 
 def index(request):
     if request.user.is_authenticated:
@@ -106,7 +107,39 @@ def lista_disciplinas(request):
         "form": form,
         "disciplinas": disciplinas,
         },
+    )   
+
+@login_required
+def editar_disciplina(request, pk):
+    professor = request.user.professor
+    disciplina = get_object_or_404(Disciplina, pk=pk, professor=professor)
+
+    if request.method == "POST":
+        form = DisciplinaForm(request.POST, instance=disciplina)
+        
+        if form.is_valid():
+            form.save()
+            return redirect("lista_disciplinas")
+    else:
+        # Se for um GET (só acessou a página), o form já vem preenchido com os dados!
+        form = DisciplinaForm(instance=disciplina)
+
+    return render(
+        request,
+        "core/disciplinas/editar_disciplina.html",
+        {
+            "form": form,
+            "disciplina": disciplina,
+        },
     )
+
+@login_required
+def excluir_disciplina(request, pk):
+    if request.method == "POST":
+        disciplina = get_object_or_404(Disciplina, pk=pk, professor__user=request.user)
+        disciplina.delete()
+    return redirect("lista_disciplinas")
+
 
 @login_required
 def lista_temas(request, disciplina_id):
@@ -131,7 +164,7 @@ def lista_temas(request, disciplina_id):
 
             return redirect(
                 "lista_temas",
-                 disciplina_id=disciplina.id,
+                disciplina_id=disciplina.id,
             )
         
         except IntegrityError:

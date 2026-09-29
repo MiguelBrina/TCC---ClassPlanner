@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block title %}Editar Disciplina{% endblock %}
+
+{% block content %}
+    <header>
+        <h1>Editar: {{ disciplina.nome }}</h1>
+    </header>
+
+    <hr>
+
+    <section>
+        <form method="POST">
+            {% csrf_token %}
+            
+            {{ form.as_p }}
+
+            <br>
+            
+            <button type="submit">Salvar Alterações</button>
+            <a href="{% url 'lista_disciplinas' %}">Cancelar</a>
+        </form>
+    </section>
+{% endblock %}

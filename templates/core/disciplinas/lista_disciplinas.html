@@ -1,32 +1,69 @@
 {% extends "base.html" %}
 
-{% block title %}
-    Disciplinas 
-{% endblock %}
+{% block title %}Disciplinas{% endblock %}
 
 {% block content %}
-    <form method="post">
-        {% csrf_token %}
+    <header>
+        <h1>Disciplinas</h1>
+        <p class="text-muted">Gerencie suas disciplinas e clique no nome para ver os temas.</p>
+    </header>
 
-        {{ form.as_p }}
+    <hr>
 
-        <button type="submit">
-            Adicionar disciplina
-        </button>
-    </form>
-
-        <h2>Disciplinas cadastradas</h2>
-
-        <ul>
+    <section>
+        <h2>Suas Disciplinas</h2>
+        
+        <div class="grid-3">
             {% for disciplina in disciplinas %}
+<<<<<<< HEAD
                 <li>
                     <a href="{% url 'lista_temas' disciplina.id %}">{{ disciplina.nome}}</a>
                 </li>
+=======
+                <div class="card">
+                    <h3 class="card-title">
+                        <a href="{% url 'lista_temas' disciplina.id %}">{{ disciplina.nome }}</a>
+                    </h3>
+                    <p class="text-muted">Cor: {{ disciplina.cor|default:'#3b82f6' }}</p>
+                    
+                    <a href="#" class="btn btn-outline">Editar</a> <!-- tem que ver isso aqui cara!-->>
+                    
+                    <form method="POST" action="#" style="display:inline;"> <!-- tem que ver isso aqui cara!-->>
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-outline" onclick="return confirm('Tem certeza?');">Excluir</button>
+                    </form>
+                </div>
+>>>>>>> wip/fix_telas
             {% empty %}
-                <li>Nenhuma disciplina cadastrada.</li>
+                <p>Nenhuma disciplina cadastrada ainda.</p>
             {% endfor %}
-        </ul>
+        </div>
+    </section>
 
+<<<<<<< HEAD
         
 
+=======
+    <hr>
+
+    <section class="card">
+        <h2 class="card-title">+ Nova Disciplina</h2>
+        
+        <form method="POST" action="{% url 'lista_disciplinas' %}">
+            {% csrf_token %}
+            
+            <p>
+                <label for="nome">Nome da Disciplina:</label>
+                <input type="text" id="nome" name="nome" class="form-control" required>
+            </p>
+
+            <p>
+                <label for="cor">Cor de Identificação:</label>
+                <input type="color" id="cor" name="cor" value="#3b82f6" class="form-control">
+            </p>
+
+            <button type="submit" class="btn btn-primary">Salvar Disciplina</button>
+        </form>
+    </section>
+>>>>>>> wip/fix_telas
 {% endblock %}
