@@ -1,111 +1,205 @@
-<<<<<<< HEAD
-Mostrar todas a entidades{% extends "base.html" %}
+{% extends "base.html" %}
+{% load static %}
 
 {% block title %}
-Conteúdos de {{ tema.nome }} - ClassPlanner
+    Conteúdos de {{ tema.nome }} - ClassPlanner
 {% endblock %}
 
 {% block content %}
 
 <div class="container">
 
+    <header>
 
-<p>
-    <a href="{% url 'lista_temas' tema.disciplina.id %}">
-        Voltar para temas
-    </a>
-</p>
+        <h1>
+            Conteúdos de {{ tema.nome }}
+        </h1>
 
-<h1>{{ tema.nome }}</h1>
+        <p>
+            Disciplina: {{ tema.disciplina.nome }}
+        </p>
 
-<h2>Adicionar conteúdo</h2>
+        <a
+            href="{% url 'lista_temas' tema.disciplina.id %}"
+        >
+            Voltar para temas
+        </a>
 
-<form method="post">
+    </header>
 
-    {% csrf_token %}
 
-    {{ form.as_p }}
+    <section>
 
-    <button type="submit">
-        Adicionar conteúdo
-    </button>
+        <h2>Adicionar conteúdo</h2>
 
-</form>
+        <form
+            method="post"
+            action="{% url 'lista_conteudos' tema.id %}"
+        >
 
-<h2>Conteúdos cadastrados</h2>
+            {% csrf_token %}
 
-<ul>
+            {{ form.non_field_errors }}
+            {{ form.nome.errors }}
 
-    {% for conteudo in conteudos %}
+            <label for="id_nome">
+                Nome do conteúdo
+            </label>
 
-        <li>
-            {{ conteudo.nome }}
-        </li>
+            {{ form.nome }}
 
-    {% empty %}
+            <button type="submit">
+                Adicionar conteúdo
+            </button>
 
-        <li>
-            Nenhum conteúdo cadastrado neste tema.
-        </li>
+        </form>
 
-    {% endfor %}
+    </section>
 
-</ul>
 
+    <section>
+
+        <h2>Conteúdos cadastrados</h2>
+
+        <div
+            class="grid-3"
+            id="conteudos-grid"
+        >
+
+            {% for conteudo in conteudos %}
+
+                <article
+                    class="card conteudo-card"
+                    data-editar-url="{% url 'editar_conteudo' conteudo.id %}"
+                    data-id="{{ conteudo.id }}"
+                >
+
+                    <h3 class="card-title">
+                        {{ conteudo.nome }}
+                    </h3>
+
+
+                    <form
+                        method="post"
+                        action="{% url 'excluir_conteudo' conteudo.id %}"
+                        class="form-excluir"
+                        data-mensagem="Tem certeza que deseja excluir este conteúdo?"
+                    >
+
+                        {% csrf_token %}
+
+                        <button type="submit">
+                            Excluir
+                        </button>
+
+                    </form>
+
+                </article>
+
+            {% empty %}
+
+                <p>
+                    Nenhum conteúdo cadastrado neste tema.
+                </p>
+
+            {% endfor %}
+
+        </div>
+
+    </section>
 
 </div>
 
-{% endblock %}
-=======
-{% extends "base.html" %}
 
-{% block title %}Conteúdos de {{ tema.nome }}{% endblock %}
+<div
+    id="conteudo-modal"
+    class="modal-overlay"
+    style="display: none;"
+    data-auto-open="{% if edicao_com_erro %}true{% else %}false{% endif %}"
+    {% if edicao_com_erro and conteudo_edicao_id %}
+        data-editar-url="{% url 'editar_conteudo' conteudo_edicao_id %}"
+    {% endif %}
+>
 
-{% block content %}
-    <header>
-        <h1>Conteúdos do Tema: {{ tema.nome }}</h1>
-        <p class="text-muted">Disciplina: {{ tema.disciplina.nome }}</p>
-        <p>
-            <a href="{% url 'lista_temas' tema.disciplina.id %}" class="btn btn-outline">⬅ Voltar para Temas</a>
-        </p>
-    </header>
+    <div class="modal-card">
 
-    <hr>
+        <div class="modal-header">
 
-    <section>
-        <h2>Lista de Conteúdos</h2>
-        
-        <div class="grid-3">
-            {% for conteudo in conteudos %}
-                <div class="card">
-                    <h3 class="card-title">{{ conteudo.nome }}</h3>
-                    
-                    <p>
-                        <a href="#" class="btn btn-outline">Editar</a> 
-                        <a href="#" class="btn btn-outline">Excluir</a>
-                    </p>
-                </div>
-            {% empty %}
-                <p>Nenhum conteúdo cadastrado para este tema ainda.</p>
-            {% endfor %}
+            <h2>
+                Editar conteúdo
+            </h2>
+
+            <button
+                type="button"
+                id="fechar-conteudo-modal"
+                aria-label="Fechar"
+            >
+                X
+            </button>
+
         </div>
-    </section>
 
-    <hr>
 
-    <section class="card">
-        <h2 class="card-title">+ Novo Conteúdo</h2>
-        
-        <form method="POST" action="{% url 'lista_conteudos' tema.id %}">
+        <form
+            method="post"
+            id="conteudo-form-edicao"
+        >
+
             {% csrf_token %}
-            
-            <p>
-                <label for="nome">Nome do Conteúdo:</label>
-                <input type="text" id="nome" name="nome" class="form-control" required>
-            </p>
-            
-            <button type="submit" class="btn btn-primary">Salvar Conteúdo</button>
+
+
+            <label for="conteudo-nome">
+                Nome do conteúdo
+            </label>
+
+            <input
+                type="text"
+                id="conteudo-nome"
+                name="nome"
+                value="{{ form_edicao.nome.value|default:'' }}"
+                required
+            >
+
+
+            {% if edicao_com_erro %}
+                {{ form_edicao.nome.errors }}
+            {% endif %}
+
+
+            <div class="modal-actions">
+
+                <button
+                    type="button"
+                    id="cancelar-conteudo-modal"
+                >
+                    Cancelar
+                </button>
+
+                <button type="submit">
+                    Salvar
+                </button>
+
+            </div>
+
         </form>
-    </section>
+
+
+        <button
+            type="button"
+            id="excluir-conteudo-modal"
+            style="display: none;"
+        >
+            Excluir conteúdo
+        </button>
+
+    </div>
+
+</div>
+
+
+<script
+    src="{% static 'core/js/conteudos.js' %}"
+    defer
+></script>
+
 {% endblock %}
->>>>>>> wip/fix_telas

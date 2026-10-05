@@ -1,69 +1,229 @@
 {% extends "base.html" %}
+{% load static %}
 
-{% block title %}Disciplinas{% endblock %}
+{% block title %}
+    Disciplinas - ClassPlanner
+{% endblock %}
 
 {% block content %}
+
+<div class="container">
+
     <header>
         <h1>Disciplinas</h1>
-        <p class="text-muted">Gerencie suas disciplinas e clique no nome para ver os temas.</p>
+
+        <p>
+            Gerencie suas disciplinas e dê uma cor para cada uma.
+        </p>
     </header>
 
-    <hr>
 
     <section>
-        <h2>Suas Disciplinas</h2>
-        
-        <div class="grid-3">
+
+        <button
+            type="button"
+            id="abrir-nova-disciplina"
+        >
+            Nova disciplina
+        </button>
+
+    </section>
+
+
+    <section>
+
+        <h2>Suas disciplinas</h2>
+
+        <div
+            class="grid-3"
+            id="disciplinas-grid"
+        >
+
             {% for disciplina in disciplinas %}
-<<<<<<< HEAD
-                <li>
-                    <a href="{% url 'lista_temas' disciplina.id %}">{{ disciplina.nome}}</a>
-                </li>
-=======
-                <div class="card">
+
+                <article
+                    class="card disciplina-card"
+                    data-editar-url="{% url 'editar_disciplina' disciplina.id %}"
+                    data-id="{{ disciplina.id }}"
+                >
+
+                    <div
+                        class="disciplina-color-tag"
+                        style="background-color: {{ disciplina.cor }};"
+                    ></div>
+
+
                     <h3 class="card-title">
-                        <a href="{% url 'lista_temas' disciplina.id %}">{{ disciplina.nome }}</a>
+
+                        <a
+                            href="{% url 'lista_temas' disciplina.id %}"
+                        >
+                            {{ disciplina.nome }}
+                        </a>
+
                     </h3>
-                    <p class="text-muted">Cor: {{ disciplina.cor|default:'#3b82f6' }}</p>
-                    
-                    <a href="#" class="btn btn-outline">Editar</a> <!-- tem que ver isso aqui cara!-->>
-                    
-                    <form method="POST" action="#" style="display:inline;"> <!-- tem que ver isso aqui cara!-->>
+
+
+                    <p>
+                        Cor: {{ disciplina.cor }}
+                    </p>
+
+
+                    <form
+                        method="post"
+                        action="{% url 'excluir_disciplina' disciplina.id %}"
+                        class="form-excluir"
+                        data-mensagem="Tem certeza que deseja excluir esta disciplina? Todos os seus temas e conteúdos também serão excluídos."
+                    >
+
                         {% csrf_token %}
-                        <button type="submit" class="btn btn-outline" onclick="return confirm('Tem certeza?');">Excluir</button>
+
+                        <button type="submit">
+                            Excluir
+                        </button>
+
                     </form>
-                </div>
->>>>>>> wip/fix_telas
+
+                </article>
+
             {% empty %}
-                <p>Nenhuma disciplina cadastrada ainda.</p>
+
+                <p>
+                    Nenhuma disciplina cadastrada ainda.
+                </p>
+
             {% endfor %}
+
         </div>
+
     </section>
 
-<<<<<<< HEAD
-        
+</div>
 
-=======
-    <hr>
 
-    <section class="card">
-        <h2 class="card-title">+ Nova Disciplina</h2>
-        
-        <form method="POST" action="{% url 'lista_disciplinas' %}">
+<div
+    id="disciplina-modal"
+    class="modal-overlay"
+    style="display: none;"
+    data-auto-open="{% if edicao_com_erro %}true{% else %}false{% endif %}"
+    data-modo="{% if edicao_com_erro %}editar{% else %}novo{% endif %}"
+    {% if edicao_com_erro and disciplina_edicao_id %}
+        data-editar-url="{% url 'editar_disciplina' disciplina_edicao_id %}"
+    {% endif %}
+>
+
+    <div class="modal-card">
+
+        <div class="modal-header">
+
+            <h2 id="disciplina-modal-titulo">
+                Nova disciplina
+            </h2>
+
+            <button
+                type="button"
+                id="fechar-disciplina-modal"
+                aria-label="Fechar"
+            >
+                X
+            </button>
+
+        </div>
+
+
+        <form
+            method="post"
+            id="disciplina-form"
+            action="{% url 'lista_disciplinas' %}"
+        >
+
             {% csrf_token %}
-            
-            <p>
-                <label for="nome">Nome da Disciplina:</label>
-                <input type="text" id="nome" name="nome" class="form-control" required>
-            </p>
 
-            <p>
-                <label for="cor">Cor de Identificação:</label>
-                <input type="color" id="cor" name="cor" value="#3b82f6" class="form-control">
-            </p>
 
-            <button type="submit" class="btn btn-primary">Salvar Disciplina</button>
+            <label for="disciplina-nome">
+                Nome da disciplina
+            </label>
+
+            <input
+                type="text"
+                id="disciplina-nome"
+                name="nome"
+                value="{% if edicao_com_erro %}{{ form_edicao.nome.value|default:'' }}{% else %}{{ form.nome.value|default:'' }}{% endif %}"
+                required
+            >
+
+
+            {% if edicao_com_erro %}
+                {{ form_edicao.nome.errors }}
+            {% else %}
+                {{ form.nome.errors }}
+            {% endif %}
+
+
+            <label for="disciplina-cor">
+                Cor de identificação
+            </label>
+
+            <input
+                type="color"
+                id="disciplina-cor"
+                name="cor"
+                value="{% if edicao_com_erro %}{{ form_edicao.cor.value|default:'#3b82f6' }}{% else %}{{ form.cor.value|default:'#3b82f6' }}{% endif %}"
+            >
+
+
+            {% if edicao_com_erro %}
+                {{ form_edicao.cor.errors }}
+            {% else %}
+                {{ form.cor.errors }}
+            {% endif %}
+
+
+            <div class="modal-actions">
+
+                <button
+                    type="button"
+                    id="cancelar-disciplina-modal"
+                >
+                    Cancelar
+                </button>
+
+                <button type="submit">
+                    Salvar
+                </button>
+
+            </div>
+
         </form>
-    </section>
->>>>>>> wip/fix_telas
+
+
+        <button
+            type="button"
+            id="excluir-disciplina-modal"
+            style="display: none;"
+        >
+            Excluir disciplina
+        </button>
+
+
+        <form
+            method="post"
+            id="disciplina-form-excluir"
+            style="display: none;"
+        >
+
+            {% csrf_token %}
+
+        </form>
+
+    </div>
+
+</div>
+
+
+<script
+    src="{% static 'core/js/disciplinas.js' %}"
+    defer
+></script>
+
 {% endblock %}

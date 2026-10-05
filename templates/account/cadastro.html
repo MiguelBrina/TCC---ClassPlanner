@@ -1,40 +1,227 @@
 {% extends "base.html" %}
+{% load static %}
 
-{% block title %}Criar Conta - ClassPlanner{% endblock %}
+{% block title %}
+    Criar conta - ClassPlanner
+{% endblock %}
+
+{% block extra_css %}
+
+<link
+    rel="stylesheet"
+    href="{% static 'css/auth.css' %}"
+>
+
+{% endblock %}
+
 
 {% block content %}
 
-<div class="flex-center" style="min-height: 70vh;">
-    <div class="card" style="width: 100%; max-width: 420px;">
+<div class="auth-page">
+
+    <div class="auth-card">
+
+        <h1>
+            Criar conta
+        </h1>
+
+        <p class="auth-subtitle">
+            Comece a organizar suas aulas hoje.
+        </p>
 
 
-    <h2 class="text-center" style="margin-bottom: 0.5rem;">
-        Criar Conta
-    </h2>
+        <form method="post" class="auth-form">
 
-    <p class="text-muted text-center" style="margin-bottom: 1.5rem;">
-        Comece a organizar suas aulas hoje
-    </p>
+            {% csrf_token %}
 
-    <form method="post">
-        {% csrf_token %}
 
-        {{ form.as_p }}
+            {{ form.non_field_errors }}
 
-        <button type="submit" class="btn btn-primary" style="width: 100%;">
-            Criar Conta
-        </button>
-    </form>
 
-    <p class="text-muted text-center" style="margin-top: 1.5rem; font-size: 0.9rem;">
-        Já possui uma conta?
-        <a href="{% url 'login' %}" style="text-decoration: underline;">
-            Entrar
-        </a>
-    </p>
+            <div class="form-group">
+
+                <label for="{{ form.email.id_for_label }}">
+                    E-mail
+                </label>
+
+                {{ form.email }}
+
+                {{ form.email.errors }}
+
+            </div>
+
+
+            <div class="form-group">
+
+                <label for="{{ form.nome.id_for_label }}">
+                    Nome completo
+                </label>
+
+                {{ form.nome }}
+
+                {{ form.nome.errors }}
+
+            </div>
+
+
+            <div class="form-group">
+
+                <label for="{{ form.password1.id_for_label }}">
+                    Senha
+                </label>
+
+
+                <div class="password-field">
+
+                    {{ form.password1 }}
+
+                    <button
+                        type="button"
+                        class="password-toggle"
+                        data-password-toggle="{{ form.password1.id_for_label }}"
+                        aria-label="Mostrar senha"
+                        aria-pressed="false"
+                    >
+
+                        <svg
+                            data-eye-open
+                            width="20"
+                            height="20"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                        >
+                            <path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6z"/>
+                            <circle cx="12" cy="12" r="2.5"/>
+                        </svg>
+
+
+                        <svg
+                            data-eye-closed
+                            hidden
+                            width="20"
+                            height="20"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                        >
+                            <path d="M3 3l18 18"/>
+                            <path d="M10.6 10.6a2 2 0 0 0 2.8 2.8"/>
+                            <path d="M9.9 4.2A10.8 10.8 0 0 1 12 4c6 0 9.5 8 9.5 8a18.5 18.5 0 0 1-3.2 4.4"/>
+                            <path d="M6.3 6.3C3.7 8.1 2.5 12 2.5 12s3.5 8 9.5 8c1.8 0 3.4-.5 4.8-1.2"/>
+                        </svg>
+
+                    </button>
+
+                </div>
+
+                {{ form.password1.errors }}
+
+            </div>
+
+
+            <div class="form-group">
+
+                <label for="{{ form.password2.id_for_label }}">
+                    Senha novamente
+                </label>
+
+
+                <div class="password-field">
+
+                    {{ form.password2 }}
+
+                    <button
+                        type="button"
+                        class="password-toggle"
+                        data-password-toggle="{{ form.password2.id_for_label }}"
+                        aria-label="Mostrar senha"
+                        aria-pressed="false"
+                    >
+
+                        <svg
+                            data-eye-open
+                            width="20"
+                            height="20"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                        >
+                            <path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6z"/>
+                            <circle cx="12" cy="12" r="2.5"/>
+                        </svg>
+
+
+                        <svg
+                            data-eye-closed
+                            hidden
+                            width="20"
+                            height="20"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                        >
+                            <path d="M3 3l18 18"/>
+                            <path d="M10.6 10.6a2 2 0 0 0 2.8 2.8"/>
+                            <path d="M9.9 4.2A10.8 10.8 0 0 1 12 4c6 0 9.5 8 9.5 8a18.5 18.5 0 0 1-3.2 4.4"/>
+                            <path d="M6.3 6.3C3.7 8.1 2.5 12 2.5 12s3.5 8 9.5 8c1.8 0 3.4-.5 4.8-1.2"/>
+                        </svg>
+
+                    </button>
+
+                </div>
+
+                {{ form.password2.errors }}
+
+            </div>
+
+
+            {% if form.password1.help_text %}
+
+                <div class="password-rules">
+                    {{ form.password1.help_text|safe }}
+                </div>
+
+            {% endif %}
+
+
+            <button
+                type="submit"
+                class="auth-submit"
+            >
+                Criar conta
+            </button>
+
+        </form>
+
+
+        <p class="auth-footer">
+            Já possui uma conta?
+            <a href="{% url 'login' %}">
+                Entrar
+            </a>
+        </p>
+
+    </div>
 
 </div>
 
 
-</div>
+<script
+    src="{% static 'account/js/autenticacao.js' %}"
+    defer
+></script>
+
 {% endblock %}

@@ -1,15 +1,23 @@
 from django.db import models
 
-#region hierarquia de ensino 
+
+
+
+#region hierarquia de ensino
+
 class Disciplina(models.Model):
-    
     professor = models.ForeignKey(
         "conta.Professor",
         on_delete=models.CASCADE,
-        related_name="disciplinas"
+        related_name="disciplinas",
     )
-    
+
     nome = models.CharField(max_length=100)
+
+    cor = models.CharField(
+        max_length=7,
+        default="#3b82f6",
+    )
 
     def __str__(self):
         return self.nome
@@ -19,27 +27,28 @@ class Disciplina(models.Model):
             models.UniqueConstraint(
                 fields=["professor", "nome"],
                 name="unique_disciplina_professor_nome",
-                ),
+            ),
         ]
+
 
 class Tema(models.Model):
     disciplina = models.ForeignKey(
         Disciplina,
         on_delete=models.CASCADE,
-        related_name="temas"
+        related_name="temas",
     )
 
     nome = models.CharField(max_length=100)
 
     def __str__(self):
         return self.nome
-    
+
     class Meta:
         constraints = [
             models.UniqueConstraint(
                 fields=["disciplina", "nome"],
                 name="unique_tema_disciplina_nome",
-                ),
+            ),
         ]
 
 
@@ -47,24 +56,23 @@ class Conteudo(models.Model):
     tema = models.ForeignKey(
         Tema,
         on_delete=models.CASCADE,
-        related_name="conteudos"
+        related_name="conteudos",
     )
 
     nome = models.CharField(max_length=120)
 
     def __str__(self):
         return self.nome
-    
+
     class Meta:
         constraints = [
             models.UniqueConstraint(
                 fields=["tema", "nome"],
                 name="unique_conteudo_tema_nome",
-                ),
+            ),
         ]
 
 #endregion
-
 #region alunos
 class Aluno(models.Model):
     professor = models.ForeignKey(

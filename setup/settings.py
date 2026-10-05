@@ -8,8 +8,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # URL DO AMBIENTE
 
-SITE_URL = SITE_URL = "https://potential-space-waffle-x5x4qqxrv4g5cv4wr-8000.app.github.dev"
+SITE_URL = "https://effective-system-5g59pp5vx5q7h4gx4-8000.app.github.dev"
 
+CSRF_TRUSTED_ORIGINS = [
+    SITE_URL,
+    "http://localhost:8000",
+]
 
 # SEGURANÇA BÁSICA
 
@@ -22,13 +26,6 @@ ALLOWED_HOSTS = [
     "localhost",
     "127.0.0.1",
     ".app.github.dev",
-]
-
-
-CSRF_TRUSTED_ORIGINS = [
-    SITE_URL,
-    "http://localhost:8000",
-    "https://localhost:8000",
 ]
 
 
