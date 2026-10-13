@@ -1,6 +1,5 @@
 {% extends "base.html" %}
-{% load static %}
-{% load socialaccount %}
+<!-- {% load socialaccount %} -->
 
 {% block title %}
     Entrar - ClassPlanner
@@ -8,11 +7,6 @@
 
 
 {% block extra_css %}
-
-<link
-    rel="stylesheet"
-    href="{% static 'css/auth.css' %}"
->
 
 {% endblock %}
 
@@ -159,11 +153,7 @@
         </div>
 
 
-        <form
-            method="post"
-            action="{% provider_login_url 'google' process='login' %}"
-            class="social-login-form"
-        >
+        <form method="post" action="{% provider_login_url 'google' process='login' %}" class="social-login-form"> <!-- Linha para o login funcionar!!-->
 
             {% csrf_token %}
 
@@ -226,11 +216,5 @@
     </div>
 
 </div>
-
-
-<script
-    src="{% static 'account/js/autenticacao.js' %}"
-    defer
-></script>
 
 {% endblock %}

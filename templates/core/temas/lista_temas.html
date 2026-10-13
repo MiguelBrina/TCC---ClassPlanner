@@ -83,8 +83,7 @@
                         method="post"
                         action="{% url 'excluir_tema' tema.id %}"
                         class="form-excluir"
-                        data-mensagem="Tem certeza que deseja excluir este tema? Todos os seus conteúdos também serão excluídos."
-                    >
+                        data-mensagem="Tem certeza que deseja excluir este tema? Todos os seus conteúdos também serão excluídos.">
 
                         {% csrf_token %}
 
