@@ -1,5 +1,4 @@
 {% extends "base.html" %}
-{% load static %}
 
 {% block title %}
     Disciplinas - ClassPlanner
@@ -20,32 +19,21 @@
 
     <section>
 
-        <button
-            type="button"
-            id="abrir-nova-disciplina"
-        >
-            Nova disciplina
-        </button>
-
+        <button type="button" id="abrir-nova-disciplina"> Nova disciplina </button>
     </section>
-
 
     <section>
 
         <h2>Suas disciplinas</h2>
 
-        <div
-            class="grid-3"
-            id="disciplinas-grid"
-        >
+        <div class="grid-3" id="disciplinas-grid">
 
             {% for disciplina in disciplinas %}
 
                 <article
                     class="card disciplina-card"
                     data-editar-url="{% url 'editar_disciplina' disciplina.id %}"
-                    data-id="{{ disciplina.id }}"
-                >
+                    data-id="{{ disciplina.id }}">
 
                     <div
                         class="disciplina-color-tag"
