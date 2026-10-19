@@ -17,7 +17,8 @@ def test_criar_disciplina(client):
     url = reverse("lista_disciplinas")
     
     dados = {
-        "nome": "Bateria"
+        "nome": "Bateria",
+        "cor" : "#3b82f6",
     }
     
     resposta = client.post(url, dados)
