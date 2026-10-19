@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load static %}
 
 {% block title %}
     Configuração inicial - ClassPlanner
@@ -6,25 +7,31 @@
 
 {% block content %}
 
-<div class="container">
+<div class="container configuracoes-container">
 
-    <h1>Configure sua agenda</h1>
+    <header>
+        <h1>Configure sua agenda</h1>
 
-    <p>
-        Antes de começar, escolha como sua agenda vai funcionar.
-    </p>
+        <p>
+            Antes de começar, escolha como sua agenda vai funcionar.
+        </p>
+    </header>
 
-    <form method="post" id="configuracao-form">
+    <form
+        method="post"
+        id="configuracao-form"
+        class="configuracoes-form"
+    >
 
         {% csrf_token %}
 
         {{ form.non_field_errors }}
 
-        <section>
+        <section class="configuracao-card">
 
             <h2>Nome de exibição</h2>
 
-            <p>
+            <p class="configuracao-descricao">
                 Esse é o nome que será usado no ClassPlanner.
             </p>
 
@@ -33,11 +40,11 @@
 
         </section>
 
-        <section>
+        <section class="configuracao-card">
 
             <h2>Dias da semana</h2>
 
-            <p>
+            <p class="configuracao-descricao">
                 Selecione os dias que você utiliza para dar aulas.
             </p>
 
@@ -77,21 +84,25 @@
 
         </section>
 
-        <section>
+        <section class="configuracao-card">
 
             <h2>Horários da agenda</h2>
 
-            <p>
+            <p class="configuracao-descricao">
                 Adicione os horários que aparecerão na sua agenda.
             </p>
 
             {{ form.horarios.errors }}
 
-            <div id="horarios-container"></div>
+            <div
+                id="horarios-container"
+                class="horarios-container"
+            ></div>
 
             <button
                 type="button"
                 id="adicionar-horario"
+                class="btn btn-outline"
             >
                 + Adicionar horário
             </button>
@@ -101,18 +112,19 @@
         {{ form.dias }}
         {{ form.horarios }}
 
-        <button type="submit">
-            Salvar configuração
-        </button>
+        <div class="configuracoes-acoes">
+
+            <button
+                type="submit"
+                class="btn btn-primary"
+            >
+                Salvar configuração
+            </button>
+
+        </div>
 
     </form>
 
 </div>
 
-{% load static %}
-
-<script
-    src="{% static 'account/js/configuracao_inicial.js' %}"
-    defer
-></script>
 {% endblock %}

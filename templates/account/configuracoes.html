@@ -6,19 +6,33 @@
 
 {% block content %}
 
-<div class="container">
+<div class="container configuracoes-container">
 
-    <h1>Configurações</h1>
+    <header>
+        <h1>Configurações</h1>
 
-    <form method="post" id="configuracao-form">
+        <p>
+            Personalize sua experiência de estudos no ClassPlanner.
+        </p>
+    </header>
+
+    <form
+        method="post"
+        id="configuracao-form"
+        class="configuracoes-form"
+    >
 
         {% csrf_token %}
 
         {{ form.non_field_errors }}
 
-        <section>
+        <section class="configuracao-card">
 
             <h2>Nome de exibição</h2>
+
+            <p class="configuracao-descricao">
+                Escolha como seu nome será exibido no sistema.
+            </p>
 
             {{ form.nome_exibicao.errors }}
 
@@ -26,10 +40,13 @@
 
         </section>
 
-
-        <section>
+        <section class="configuracao-card">
 
             <h2>Dias da semana</h2>
+
+            <p class="configuracao-descricao">
+                Selecione os dias em que você pretende estudar.
+            </p>
 
             {{ form.dias.errors }}
 
@@ -67,37 +84,48 @@
 
         </section>
 
-
-        <section>
+        <section class="configuracao-card">
 
             <h2>Horários</h2>
 
+            <p class="configuracao-descricao">
+                Organize os horários disponíveis para sua rotina.
+            </p>
+
             {{ form.horarios.errors }}
 
-            <div id="horarios-container"></div>
+            <div
+                id="horarios-container"
+                class="horarios-container"
+            ></div>
 
             <button
                 type="button"
                 id="adicionar-horario"
+                class="btn btn-outline"
             >
                 + Adicionar horário
             </button>
 
         </section>
 
-
         {{ form.dias }}
         {{ form.horarios }}
 
+        <div class="configuracoes-acoes">
 
-        <button type="submit">
-            Salvar alterações
-        </button>
+            <button
+                type="submit"
+                class="btn btn-primary"
+            >
+                Salvar alterações
+            </button>
+
+        </div>
 
     </form>
 
-
-    <section>
+    <section class="configuracao-card configuracao-perigo">
 
         <h2>Excluir conta</h2>
 
@@ -105,7 +133,11 @@
             A exclusão da conta é permanente e não poderá ser desfeita.
         </p>
 
-        <button type="button" id="abrir-exclusao">
+        <button
+            type="button"
+            id="abrir-exclusao"
+            class="btn btn-danger"
+        >
             Excluir minha conta
         </button>
 
@@ -113,11 +145,28 @@
 
 </div>
 
-<div id="modal-exclusao" style="display: none;" data-tem-erros="{% if form_exclusao.errors %}true{% else %}false{% endif %}">
+<div
+    id="modal-exclusao"
+    style="display: none;"
+    data-tem-erros="{% if form_exclusao.errors %}true{% else %}false{% endif %}"
+>
 
     <div id="modal-conteudo">
 
-        <h2>Excluir conta</h2>
+        <div class="modal-header">
+
+            <h2>Excluir conta</h2>
+
+            <button
+                type="button"
+                id="cancelar-exclusao"
+                class="btn-close"
+                aria-label="Fechar"
+            >
+                X
+            </button>
+
+        </div>
 
         <p>
             Essa ação é permanente e não poderá ser desfeita.
@@ -127,33 +176,41 @@
             Para confirmar, digite exatamente seu nome de exibição.
         </p>
 
-        <form method="post" action="{% url 'excluir_conta' %}">
+        <form
+            method="post"
+            action="{% url 'excluir_conta' %}"
+        >
 
             {% csrf_token %}
 
             {{ form_exclusao.as_p }}
 
-            <button type="button" id="cancelar-exclusao">
-                Cancelar
-            </button>
+            <div class="modal-actions">
 
-            <button type="submit">
-                Excluir minha conta permanentemente
-            </button>
+                <button
+                    type="button"
+                    id="cancelar-exclusao-secundario"
+                    class="btn btn-outline"
+                >
+                    Cancelar
+                </button>
+
+                <button
+                    type="submit"
+                    class="btn btn-danger"
+                >
+                    Excluir minha conta permanentemente
+                </button>
+
+            </div>
 
         </form>
 
     </div>
 
 </div>
+
 {{ form.initial.dias|default:"[]"|json_script:"dias-iniciais" }}
 {{ form.initial.horarios|default:"[]"|json_script:"horarios-iniciais" }}
-
-{% load static %}
-
-<script
-    src="{% static 'account/js/configuracoes.js' %}"
-    defer
-></script>
 
 {% endblock %}

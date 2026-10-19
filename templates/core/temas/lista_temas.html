@@ -1,5 +1,4 @@
 {% extends "base.html" %}
-{% load static %}
 
 {% block title %}
     Temas de {{ disciplina.nome }} - ClassPlanner
@@ -15,12 +14,14 @@
             Temas de {{ disciplina.nome }}
         </h1>
 
-        <a href="{% url 'lista_disciplinas' %}">
+        <a
+            href="{% url 'lista_disciplinas' %}"
+            class="btn btn-outline"
+        >
             Voltar para disciplinas
         </a>
 
     </header>
-
 
     <section>
 
@@ -40,16 +41,24 @@
                 Nome do tema
             </label>
 
-            {{ form.nome }}
+            <input 
+                type="text" 
+                id="id_nome" 
+                name="nome" 
+                class="form-control" 
+                value="{{ form.nome.value|default:'' }}" 
+                required>
 
-            <button type="submit">
+            <button
+                type="submit"
+                class="btn btn-primary"
+            >
                 Adicionar tema
             </button>
 
         </form>
 
     </section>
-
 
     <section>
 
@@ -70,14 +79,11 @@
 
                     <h3 class="card-title">
 
-                        <a
-                            href="{% url 'lista_conteudos' tema.id %}"
-                        >
+                        <a href="{% url 'lista_conteudos' tema.id %}">
                             {{ tema.nome }}
                         </a>
 
                     </h3>
-
 
                     <form
                         method="post"
@@ -98,7 +104,7 @@
 
             {% empty %}
 
-                <p>
+                <p class="text-muted">
                     Nenhum tema cadastrado nesta disciplina.
                 </p>
 
@@ -110,10 +116,8 @@
 
 </div>
 
-
 <div
     id="tema-modal"
-    class="modal-overlay"
     style="display: none;"
     data-auto-open="{% if edicao_com_erro %}true{% else %}false{% endif %}"
     {% if edicao_com_erro and tema_edicao_id %}
@@ -125,13 +129,14 @@
 
         <div class="modal-header">
 
-            <h2>
+            <h2 id="tema-modal-titulo">
                 Editar tema
             </h2>
 
             <button
                 type="button"
                 id="fechar-tema-modal"
+                class="btn-close"
                 aria-label="Fechar"
             >
                 X
@@ -139,14 +144,12 @@
 
         </div>
 
-
         <form
             method="post"
             id="tema-form-edicao"
         >
 
             {% csrf_token %}
-
 
             <label for="tema-nome">
                 Nome do tema
@@ -156,26 +159,29 @@
                 type="text"
                 id="tema-nome"
                 name="nome"
+                class="form-control"
                 value="{{ form_edicao.nome.value|default:'' }}"
                 required
             >
 
-
             {% if edicao_com_erro %}
                 {{ form_edicao.nome.errors }}
             {% endif %}
-
 
             <div class="modal-actions">
 
                 <button
                     type="button"
                     id="cancelar-tema-modal"
+                    class="btn btn-outline"
                 >
                     Cancelar
                 </button>
 
-                <button type="submit">
+                <button
+                    type="submit"
+                    class="btn btn-primary"
+                >
                     Salvar
                 </button>
 
@@ -183,23 +189,25 @@
 
         </form>
 
-
         <button
             type="button"
             id="excluir-tema-modal"
+            class="btn btn-outline"
             style="display: none;"
         >
             Excluir tema
         </button>
 
+        <form
+            method="post"
+            id="tema-form-excluir"
+            style="display: none;"
+        >
+            {% csrf_token %}
+        </form>
+
     </div>
 
 </div>
-
-
-<script
-    src="{% static 'core/js/temas.js' %}"
-    defer
-></script>
 
 {% endblock %}

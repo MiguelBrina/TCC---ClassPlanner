@@ -10,13 +10,24 @@
 
     <title>{% block title %}ClassPlanner{% endblock %}</title>
 
-    <link rel="stylesheet" href="{% static 'css/base.css' %}">
-    <link rel="stylesheet" href="{% static 'css/componentes.css' %}">
-    <link rel="stylesheet" href="{% static 'css/footer.css' %}">
+<link rel="stylesheet" href="{% static 'core/css/base.css' %}">
+<link rel="stylesheet" href="{% static 'core/css/auth.css' %}">
+<link rel="stylesheet" href="{% static 'core/css/componentes.css' %}">
+<link rel="stylesheet" href="{% static 'core/css/footer.css' %}">
 
 {% block extra_css %}{% endblock %}
 
 </head>
+
+{% block extra_js %}
+
+<script src="{% static 'core/js/disciplinas.js' %}" defer></script>
+<script src="{% static 'core/js/temas.js' %}"defer></script>
+<script src="{% static 'core/js/conteudos.js' %}" defer></script>
+<script src="{% static 'account/js/configuracoes.js' %}" defer></script>
+<script src="{% static 'account/js/configuracao_inicial.js' %}" defer ></script>
+
+{% endblock %}
 
 <body>
 
@@ -31,6 +42,10 @@
 {% if not user.is_authenticated %}
     {% include "includes/footer.html" %}
 {% endif %}
+
+<script src="{% static 'account/js/autenticacao.js' %}" defer></script>
+<script src="{% static 'core/js/conteudos.js' %}" defer></script>
+
 
 </body>
 

@@ -1,4 +1,6 @@
+```html
 {% extends "base.html" %}
+{% load static %}
 
 {% block title %}
     Disciplinas - ClassPlanner
@@ -16,31 +18,37 @@
         </p>
     </header>
 
-
     <section>
-
-        <button type="button" id="abrir-nova-disciplina">Nova disciplina</button>
-
+        <button
+            type="button"
+            id="abrir-nova-disciplina"
+            class="btn btn-primary"
+        >
+            Nova disciplina
+        </button>
     </section>
-
 
     <section>
 
         <h2>Suas disciplinas</h2>
 
-        <div class="grid-3" id="disciplinas-grid">
+        <div
+            class="grid-3"
+            id="disciplinas-grid"
+        >
+
             {% for disciplina in disciplinas %}
 
                 <article
                     class="card disciplina-card"
                     data-editar-url="{% url 'editar_disciplina' disciplina.id %}"
-                    data-id="{{ disciplina.id }}">
+                    data-id="{{ disciplina.id }}"
+                >
 
                     <div
                         class="disciplina-color-tag"
-                        style="background-color: {{ disciplina.cor }};">
-                    </div>
-
+                        style="background-color: {{ disciplina.cor }};"
+                    ></div>
 
                     <h3 class="card-title">
                         <a href="{% url 'lista_temas' disciplina.id %}">
@@ -48,17 +56,16 @@
                         </a>
                     </h3>
 
-
                     <p>
                         Cor: {{ disciplina.cor }}
                     </p>
-
 
                     <form
                         method="post"
                         action="{% url 'excluir_disciplina' disciplina.id %}"
                         class="form-excluir"
-                        data-mensagem="Tem certeza que deseja excluir esta disciplina? Todos os seus temas e conteúdos também serão excluídos.">
+                        data-mensagem="Tem certeza que deseja excluir esta disciplina? Todos os seus temas e conteúdos também serão excluídos."
+                    >
 
                         {% csrf_token %}
 
@@ -72,7 +79,7 @@
 
             {% empty %}
 
-                <p>
+                <p class="text-muted">
                     Nenhuma disciplina cadastrada ainda.
                 </p>
 
@@ -84,7 +91,6 @@
 
 </div>
 
-
 <div
     id="disciplina-modal"
     class="modal-overlay"
@@ -93,7 +99,8 @@
     data-modo="{% if edicao_com_erro %}editar{% else %}novo{% endif %}"
     {% if edicao_com_erro and disciplina_edicao_id %}
         data-editar-url="{% url 'editar_disciplina' disciplina_edicao_id %}"
-    {% endif %}>
+    {% endif %}
+>
 
     <div class="modal-card">
 
@@ -103,22 +110,24 @@
                 Nova disciplina
             </h2>
 
-            <button 
+            <button
                 type="button"
                 id="fechar-disciplina-modal"
-                aria-label="Fechar"> X
+                class="btn-close"
+                aria-label="Fechar"
+            >
+                X
             </button>
 
         </div>
 
-
         <form
             method="post"
             id="disciplina-form"
-            action="{% url 'lista_disciplinas' %}">
+            action="{% url 'lista_disciplinas' %}"
+        >
 
             {% csrf_token %}
-
 
             <label for="disciplina-nome">
                 Nome da disciplina
@@ -128,15 +137,16 @@
                 type="text"
                 id="disciplina-nome"
                 name="nome"
+                class="form-control"
                 value="{% if edicao_com_erro %}{{ form_edicao.nome.value|default:'' }}{% else %}{{ form.nome.value|default:'' }}{% endif %}"
-                required>
+                required
+            >
 
             {% if edicao_com_erro %}
                 {{ form_edicao.nome.errors }}
             {% else %}
                 {{ form.nome.errors }}
             {% endif %}
-
 
             <label for="disciplina-cor">
                 Cor de identificação
@@ -146,7 +156,9 @@
                 type="color"
                 id="disciplina-cor"
                 name="cor"
-                value="{% if edicao_com_erro %}{{ form_edicao.cor.value|default:'#3b82f6' }}{% else %}{{ form.cor.value|default:'#3b82f6' }}{% endif %}">
+                class="form-control"
+                value="{% if edicao_com_erro %}{{ form_edicao.cor.value|default:'#3b82f6' }}{% else %}{{ form.cor.value|default:'#3b82f6' }}{% endif %}"
+            >
 
             {% if edicao_com_erro %}
                 {{ form_edicao.cor.errors }}
@@ -158,11 +170,16 @@
 
                 <button
                     type="button"
-                    id="cancelar-disciplina-modal">
+                    id="cancelar-disciplina-modal"
+                    class="btn btn-outline"
+                >
                     Cancelar
                 </button>
 
-                <button type="submit">
+                <button
+                    type="submit"
+                    class="btn btn-primary"
+                >
                     Salvar
                 </button>
 
@@ -170,19 +187,20 @@
 
         </form>
 
-
         <button
             type="button"
             id="excluir-disciplina-modal"
-            style="display: none;">
+            class="btn btn-outline"
+            style="display: none;"
+        >
             Excluir disciplina
         </button>
-
 
         <form
             method="post"
             id="disciplina-form-excluir"
-            style="display: none;">
+            style="display: none;"
+        >
 
             {% csrf_token %}
 
@@ -191,10 +209,5 @@
     </div>
 
 </div>
-
-
-<script
-    src="{% static 'core/js/disciplinas.js' %}"
-    defer></script>
 
 {% endblock %}
