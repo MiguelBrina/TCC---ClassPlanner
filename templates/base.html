@@ -10,10 +10,10 @@
 
     <title>{% block title %}ClassPlanner{% endblock %}</title>
 
-<link rel="stylesheet" href="{% static 'core/css/base.css' %}">
-<link rel="stylesheet" href="{% static 'core/css/auth.css' %}">
-<link rel="stylesheet" href="{% static 'core/css/componentes.css' %}">
-<link rel="stylesheet" href="{% static 'core/css/footer.css' %}">
+<link rel="stylesheet" href="{% static 'core/styles/base.css' %}">
+<link rel="stylesheet" href="{% static 'core/styles/auth.css' %}">
+<link rel="stylesheet" href="{% static 'core/styles/componentes.css' %}">
+<link rel="stylesheet" href="{% static 'core/styles/footer.css' %}">
 
 {% block extra_css %}{% endblock %}
 
@@ -21,8 +21,7 @@
 
 {% block extra_js %}
 
-<script src="{% static 'account/js/configuracoes.js' %}" defer></script>
-<script src="{% static 'account/js/configuracao_inicial.js' %}" defer ></script>
+<!-- usar para colocar arquivos JS -->
 
 {% endblock %}
 

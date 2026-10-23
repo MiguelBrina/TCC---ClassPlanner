@@ -113,8 +113,8 @@
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: 8px;
-    padding: 30px;
-    min-height: 150px;
+    padding: 20px;
+    min-width: 50px;
     cursor: pointer;
     box-shadow: 0 2px 8px rgba(15, 23, 42, 0.05);
     transition:
