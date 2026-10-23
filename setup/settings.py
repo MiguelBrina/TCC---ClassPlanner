@@ -13,8 +13,12 @@ SITE_URL = "https://effective-system-5g59pp5vx5q7h4gx4-8000.app.github.dev"
 CSRF_TRUSTED_ORIGINS = [
     SITE_URL,
     "http://localhost:8000",
+    "https://localhost:8000",
 ]
 
+LOGIN_URL = "login"
+LOGIN_REDIRECT_URL = "/pos-login/"
+LOGOUT_REDIRECT_URL = "/"
 # SEGURANÇA BÁSICA
 
 SECRET_KEY = 'django-insecure-)%nm&!q2*xs_)8euokjzs)wah(6fl8-pol=t3j@_ku__8*ryd8'
@@ -101,7 +105,7 @@ ACCOUNT_SIGNUP_FIELDS = [
 
 ACCOUNT_SIGNUP_FORM_CLASS = "account.forms.FormularioCadastro"
 
-ACCOUNT_EMAIL_VERIFICATION = "none" # Mudar para "none" quando desenvolvimento local, caso não "mandatory"
+ACCOUNT_EMAIL_VERIFICATION = "mandatory" # Mudar para "none" quando desenvolvimento local, caso não "mandatory"
 
 
 # Redirecionamentos

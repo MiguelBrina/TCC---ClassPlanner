@@ -60,7 +60,7 @@
 .auth-input:focus,
 .form-group input:focus {
     outline: none;
-    border-color: #4f46e5;
+    border-color: #00508F;
     box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12);
 }
 
@@ -183,7 +183,7 @@
 
 .auth-links a,
 .auth-footer a {
-    color: #4f46e5;
+    color: #00508F;
     font-weight: 600;
 }
 
