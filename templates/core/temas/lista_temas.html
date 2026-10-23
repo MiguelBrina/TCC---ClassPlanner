@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load static %}
 
 {% block title %}
     Temas de {{ disciplina.nome }} - ClassPlanner
@@ -49,10 +50,7 @@
                 value="{{ form.nome.value|default:'' }}" 
                 required>
 
-            <button
-                type="submit"
-                class="btn btn-primary"
-            >
+            <button type="submit" class="btn btn-primary">
                 Adicionar tema
             </button>
 
@@ -64,18 +62,14 @@
 
         <h2>Temas cadastrados</h2>
 
-        <div
-            class="grid-3"
-            id="temas-grid"
-        >
+        <div class="grid-3" id="temas-grid">
 
             {% for tema in temas %}
 
                 <article
                     class="card tema-card"
                     data-editar-url="{% url 'editar_tema' tema.id %}"
-                    data-id="{{ tema.id }}"
-                >
+                    data-id="{{ tema.id }}">
 
                     <h3 class="card-title">
 
@@ -85,12 +79,10 @@
 
                     </h3>
 
-                    <form
-                        method="post"
+                    <form method="post"
                         action="{% url 'excluir_tema' tema.id %}"
                         class="form-excluir"
-                        data-mensagem="Tem certeza que deseja excluir este tema? Todos os seus conteúdos também serão excluídos."
-                    >
+                        data-mensagem="Tem certeza que deseja excluir este tema? Todos os seus conteúdos também serão excluídos.">
 
                         {% csrf_token %}
 
@@ -101,7 +93,6 @@
                     </form>
 
                 </article>
-
             {% empty %}
 
                 <p class="text-muted">
@@ -209,5 +200,7 @@
     </div>
 
 </div>
+
+<script src="{% static 'core/js/temas.js' %}"defer></script>
 
 {% endblock %}
