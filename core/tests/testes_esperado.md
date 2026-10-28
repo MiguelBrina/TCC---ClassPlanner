@@ -26,3 +26,5 @@
 - [ ] **9. test_pagamentos.py**
   - [ ] Gerar pagamento pendente para o aluno
   - [ ] Alterar status de pagamento para "pago"
+
+  branch iniciada
