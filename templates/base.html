@@ -8,20 +8,24 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+    <title>{% block title %}ClassPlanner{% endblock %}</title>
 
-<title>{% block title %}ClassPlanner{% endblock %}</title>
-
-<link rel="stylesheet" href="{% static 'css/base.css' %}">
-<link rel="stylesheet" href="{% static 'css/componentes.css' %}">
-<link rel="stylesheet" href="{% static 'css/footer.css' %}">
+<link rel="stylesheet" href="{% static 'core/styles/base.css' %}">
+<link rel="stylesheet" href="{% static 'core/styles/auth.css' %}">
+<link rel="stylesheet" href="{% static 'core/styles/componentes.css' %}">
+<link rel="stylesheet" href="{% static 'core/styles/footer.css' %}">
 
 {% block extra_css %}{% endblock %}
 
-
 </head>
 
-<body>
+{% block extra_js %}
 
+<!-- usar para colocar arquivos JS -->
+
+{% endblock %}
+
+<body>
 
 {% if user.is_authenticated %}
     {% include "includes/header.html" %}
@@ -34,6 +38,9 @@
 {% if not user.is_authenticated %}
     {% include "includes/footer.html" %}
 {% endif %}
+
+<script src="{% static 'account/js/autenticacao.js' %}" defer></script>
+<script src="{% static 'core/js/conteudos.js' %}" defer></script>
 
 
 </body>

@@ -17,18 +17,15 @@
         </p>
     </header>
 
-
     <section>
-
         <button
             type="button"
             id="abrir-nova-disciplina"
+            class="btn btn-primary"
         >
             Nova disciplina
         </button>
-
     </section>
-
 
     <section>
 
@@ -52,22 +49,15 @@
                         style="background-color: {{ disciplina.cor }};"
                     ></div>
 
-
                     <h3 class="card-title">
-
-                        <a
-                            href="{% url 'lista_temas' disciplina.id %}"
-                        >
+                        <a href="{% url 'lista_temas' disciplina.id %}">
                             {{ disciplina.nome }}
                         </a>
-
                     </h3>
-
 
                     <p>
                         Cor: {{ disciplina.cor }}
                     </p>
-
 
                     <form
                         method="post"
@@ -88,7 +78,7 @@
 
             {% empty %}
 
-                <p>
+                <p class="text-muted">
                     Nenhuma disciplina cadastrada ainda.
                 </p>
 
@@ -99,7 +89,6 @@
     </section>
 
 </div>
-
 
 <div
     id="disciplina-modal"
@@ -123,13 +112,13 @@
             <button
                 type="button"
                 id="fechar-disciplina-modal"
+                class="btn-close"
                 aria-label="Fechar"
             >
                 X
             </button>
 
         </div>
-
 
         <form
             method="post"
@@ -139,7 +128,6 @@
 
             {% csrf_token %}
 
-
             <label for="disciplina-nome">
                 Nome da disciplina
             </label>
@@ -148,17 +136,16 @@
                 type="text"
                 id="disciplina-nome"
                 name="nome"
+                class="form-control"
                 value="{% if edicao_com_erro %}{{ form_edicao.nome.value|default:'' }}{% else %}{{ form.nome.value|default:'' }}{% endif %}"
                 required
             >
-
 
             {% if edicao_com_erro %}
                 {{ form_edicao.nome.errors }}
             {% else %}
                 {{ form.nome.errors }}
             {% endif %}
-
 
             <label for="disciplina-cor">
                 Cor de identificação
@@ -168,9 +155,9 @@
                 type="color"
                 id="disciplina-cor"
                 name="cor"
+                class="form-control"
                 value="{% if edicao_com_erro %}{{ form_edicao.cor.value|default:'#3b82f6' }}{% else %}{{ form.cor.value|default:'#3b82f6' }}{% endif %}"
             >
-
 
             {% if edicao_com_erro %}
                 {{ form_edicao.cor.errors }}
@@ -178,17 +165,20 @@
                 {{ form.cor.errors }}
             {% endif %}
 
-
             <div class="modal-actions">
 
                 <button
                     type="button"
                     id="cancelar-disciplina-modal"
+                    class="btn btn-outline"
                 >
                     Cancelar
                 </button>
 
-                <button type="submit">
+                <button
+                    type="submit"
+                    class="btn btn-primary"
+                >
                     Salvar
                 </button>
 
@@ -196,15 +186,14 @@
 
         </form>
 
-
         <button
             type="button"
             id="excluir-disciplina-modal"
+            class="btn btn-outline"
             style="display: none;"
         >
             Excluir disciplina
         </button>
-
 
         <form
             method="post"
@@ -220,10 +209,6 @@
 
 </div>
 
-
-<script
-    src="{% static 'core/js/disciplinas.js' %}"
-    defer
-></script>
+<script src="{% static 'core/js/disciplinas.js' %}" defer></script>
 
 {% endblock %}
