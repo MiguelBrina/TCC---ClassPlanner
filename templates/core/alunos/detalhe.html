@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>Detalhe do aluno</h1>
+
+<p>Nome: {{ aluno.nome_completo }}</p>
+<p>Telefone: {{ aluno.telefone }}</p>
+
+<p>
+    <a href="{% url 'editar_aluno' aluno.id %}">
+        Editar aluno
+    </a>
+</p>
+
+<p>
+    <a href="{% url 'matricular_aluno' aluno.id %}">
+        Matricular em disciplinas
+    </a>
+</p>
+
+<h2>Diários de Bordo</h2>
+
+{% for matricula in matriculas %}
+    <section>
+        <h3>{{ matricula.disciplina.nome }}</h3>
+
+        <p>Início: {{ matricula.data_inicio|date:"d/m/Y" }}</p>
+
+        <a href="{% url 'diario_aluno' aluno.id matricula.id %}">
+            Abrir Diário de Bordo
+        </a>
+    </section>
+{% empty %}
+    <p>Este aluno ainda não possui disciplinas matriculadas.</p>
+{% endfor %}
+
+<p>
+    <a href="{% url 'lista_alunos' %}">Voltar para alunos</a>
+</p>
+{% endblock %}

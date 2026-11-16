@@ -1,1 +1,81 @@
-info do aluno
+{% extends "base.html" %}
+
+{% block content %}
+
+<h1>Diário de Bordo</h1>
+
+<h2>{{ aluno.nome_completo }}</h2>
+
+<p>
+    <strong>Disciplina:</strong>
+    {{ disciplina.nome }}
+</p>
+
+<p>
+    <strong>Data de início:</strong>
+    {{ matricula.data_inicio|date:"d/m/Y" }}
+</p>
+
+<hr>
+
+<h2>Novo registro</h2>
+
+<form method="post">
+    {% csrf_token %}
+
+    <!-- Erros gerais do formulário, não associados a um campo específico. -->
+    {{ form.non_field_errors }}
+
+    <!-- Data, observação, temas e conteúdos. -->
+    {{ form.as_p }}
+
+    <button type="submit">Salvar registro</button>
+</form>
+
+<hr>
+
+<h2>Histórico de registros</h2>
+
+{% for registro in registros %}
+
+    <article>
+        <h3>
+            Registro de {{ registro.data|date:"d/m/Y" }}
+        </h3>
+
+        {% if registro.observacao %}
+            <p>{{ registro.observacao|linebreaksbr }}</p>
+        {% else %}
+            <p>Sem observações neste registro.</p>
+        {% endif %}
+
+        <h4>Temas trabalhados</h4>
+
+        {% for tema in registro.temas.all %}
+            <p>{{ tema.nome }}</p>
+        {% empty %}
+            <p>Nenhum tema associado.</p>
+        {% endfor %}
+
+        <h4>Conteúdos trabalhados</h4>
+
+        {% for conteudo in registro.conteudos.all %}
+            <p>{{ conteudo.nome }}</p>
+        {% empty %}
+            <p>Nenhum conteúdo associado.</p>
+        {% endfor %}
+    </article>
+
+    <hr>
+
+{% empty %}
+    <p>Este diário ainda não possui registros.</p>
+{% endfor %}
+
+<p>
+    <a href="{% url 'detalhe_aluno' aluno_id=aluno.id %}">
+        Voltar para as informações do aluno
+    </a>
+</p>
+
+{% endblock %}

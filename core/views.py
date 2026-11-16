@@ -1,5 +1,5 @@
 from django.contrib.auth.decorators import login_required
-from django.db import IntegrityError
+from django.db import IntegrityError, transaction
 from django.shortcuts import (
     get_object_or_404,
     redirect,
@@ -7,17 +7,24 @@ from django.shortcuts import (
 )
 
 from .forms import (
+    AlunoForm,
     ConteudoForm,
     DisciplinaForm,
+    MatricularDisciplinasForm,
+    RegistroMatriculaForm,
     TemaForm,
 )
+
 from .models import (
+    Aluno,
     Aula,
     Conteudo,
+    DiarioDeBordo,
     Disciplina,
+    Matricula,
+    Registro,
     Tema,
 )
-
 
 def index(request):
     if request.user.is_authenticated:
@@ -487,3 +494,356 @@ def excluir_conteudo(request, pk):
     )
 
 #endregion
+# ============================================================
+# ALUNOS
+# ============================================================
+
+@login_required
+def lista_alunos(request):
+    """
+    Exibe os alunos do professor autenticado.
+
+    O filtro por professor é essencial: não devemos misturar
+    os alunos pertencentes às contas de professores diferentes.
+    """
+
+    professor = request.user.professor
+
+    alunos = (
+        Aluno.objects
+        .filter(professor=professor)
+        .order_by("nome_completo")
+    )
+
+    return render(
+        request,
+        "core/alunos/lista_alunos.html",
+        {
+            "professor": professor,
+            "alunos": alunos,
+
+        },
+    )
+
+
+@login_required
+def cadastrar_aluno(request):
+    """
+    Exibe o formulário de cadastro e salva um aluno válido.
+
+    GET  -> apresenta o formulário.
+    POST -> valida e tenta salvar os dados enviados.
+    """
+
+    professor = request.user.professor
+
+    if request.method == "POST":
+        form = AlunoForm(request.POST)
+
+        if form.is_valid():
+            # commit=False cria o objeto em memória, mas ainda
+            # não o grava no banco de dados.
+            aluno = form.save(commit=False)
+
+            # O professor é definido pelo servidor, nunca por
+            # um campo enviado pelo navegador.
+            aluno.professor = professor
+
+            aluno.save()
+
+            # Após cadastrar, vamos ao detalhe para permitir
+            # a matrícula e o acesso direto aos diários.
+            return redirect(
+                "detalhe_aluno",
+                aluno_id=aluno.pk,
+            )
+
+    else:
+        form = AlunoForm()
+
+    return render(
+        request,
+        "core/alunos/cadastrar.html",
+        {
+            "form": form,
+        },
+    )
+
+
+@login_required
+def detalhe_aluno(request, aluno_id):
+    """
+    Mostra os dados do aluno e suas disciplinas matriculadas.
+
+    A matrícula é um relacionamento interno. Por isso, a tela
+    apresenta o acesso aos diários diretamente, sem exigir que
+    o professor navegue por uma aba de matrículas.
+    """
+
+    professor = request.user.professor
+
+    # O aluno só pode ser encontrado se pertencer ao professor.
+    aluno = get_object_or_404(
+        Aluno,
+        pk=aluno_id,
+        professor=professor,
+    )
+
+    matriculas = (
+        Matricula.objects
+        .filter(
+            aluno=aluno,
+            disciplina__professor=professor,
+        )
+        .select_related("disciplina")
+        .order_by("disciplina__nome")
+    )
+
+    return render(
+        request,
+        "core/alunos/detalhe.html",
+        {
+            "aluno": aluno,
+            "matriculas": matriculas,
+        },
+    )
+
+
+@login_required
+def editar_aluno(request, aluno_id):
+    """
+    Edita os dados de um aluno já cadastrado.
+
+    O professor continua sendo o mesmo, pois esse campo não
+    faz parte do AlunoForm.
+    """
+
+    professor = request.user.professor
+
+    aluno = get_object_or_404(
+        Aluno,
+        pk=aluno_id,
+        professor=professor,
+    )
+
+    if request.method == "POST":
+        form = AlunoForm(
+            request.POST,
+            instance=aluno,
+        )
+
+        if form.is_valid():
+            form.save()
+
+            return redirect(
+                "detalhe_aluno",
+                aluno_id=aluno.pk,
+            )
+
+    else:
+        # instance preenche o formulário com os dados existentes.
+        form = AlunoForm(instance=aluno)
+
+    return render(
+        request,
+        "core/alunos/editar.html",
+        {
+            "aluno": aluno,
+            "form": form,
+        },
+    )
+
+
+# ============================================================
+# MATRÍCULA MÚLTIPLA — FLUXO INTERNO
+# ============================================================
+
+@login_required
+def matricular_aluno(request, aluno_id):
+    """
+    Permite selecionar várias disciplinas para um único aluno.
+
+    Após validar o formulário:
+        1. Cria ou recupera cada matrícula.
+        2. Cria ou recupera o DiárioDeBordo correspondente.
+        3. Redireciona diretamente ao detalhe do aluno.
+
+    Não existe uma tela intermediária de matrículas.
+    """
+
+    professor = request.user.professor
+
+    # A autorização acontece antes da criação do formulário.
+    aluno = get_object_or_404(
+        Aluno,
+        pk=aluno_id,
+        professor=professor,
+    )
+
+    if request.method == "POST":
+        form = MatricularDisciplinasForm(
+            request.POST,
+            professor=professor,
+            aluno=aluno,
+        )
+
+        if form.is_valid():
+            data_inicio = form.cleaned_data["data_inicio"]
+            disciplinas = form.cleaned_data["disciplinas"]
+
+            try:
+                # Tudo dentro deste bloco é tratado como uma
+                # transação: falhas provocam o rollback.
+                with transaction.atomic():
+
+                    for disciplina in disciplinas:
+                        # get_or_create evita gerar outra matrícula
+                        # para um relacionamento já existente.
+                        matricula, criada = (
+                            Matricula.objects.get_or_create(
+                                aluno=aluno,
+                                disciplina=disciplina,
+                                defaults={
+                                    "data_inicio": data_inicio,
+                                },
+                            )
+                        )
+
+                        # Cada matrícula precisa de exatamente
+                        # um DiárioDeBordo.
+                        #
+                        # O OneToOneField do modelo também reforça
+                        # essa regra no banco de dados.
+                        DiarioDeBordo.objects.get_or_create(
+                            matricula=matricula,
+                        )
+
+            except IntegrityError:
+                # Uma mensagem de erro é adicionada ao formulário.
+                # O usuário permanece na tela e pode tentar novamente.
+                form.add_error(
+                    None,
+                    "Não foi possível concluir todas as matrículas. "
+                    "Verifique os dados e tente novamente.",
+                )
+
+            else:
+                # Retorno direto ao aluno, onde os diários estarão
+                # disponíveis para acesso.
+                return redirect(
+                    "detalhe_aluno",
+                    aluno_id=aluno.pk,
+                )
+
+    else:
+        form = MatricularDisciplinasForm(
+            professor=professor,
+            aluno=aluno,
+        )
+
+    return render(
+        request,
+        "core/alunos/matricular.html",
+        {
+            "aluno": aluno,
+            "form": form,
+        },
+    )
+
+
+# ============================================================
+# DIÁRIO DE BORDO
+# ============================================================
+@login_required
+def diario_aluno(request, aluno_id, matricula_id):
+    """
+    Abre o diário da disciplina associada à matrícula.
+
+    O aluno e a matrícula são recuperados com filtros de
+    propriedade para impedir o acesso cruzado entre professores.
+    """
+    print("=== DIAGNÓSTICO DE SESSÃO ===")
+    print("Usuário autenticado:", request.user.is_authenticated)
+    print("ID do usuário:", request.user.id)
+    print("Chave da sessão:", request.session.session_key)
+    print("Sessão existe:", request.session.exists(
+        request.session.session_key
+    ))
+    print("=============================")
+
+
+    professor = request.user.professor
+
+    aluno = get_object_or_404(
+        Aluno,
+        pk=aluno_id,
+        professor=professor,
+    )
+
+    matricula = get_object_or_404(
+        Matricula.objects.select_related(
+            "aluno",
+            "disciplina",
+        ),
+        pk=matricula_id,
+        aluno=aluno,
+        disciplina__professor=professor,
+    )
+
+    # Garante que a matrícula tenha um diário.
+    # Isso também permite abrir uma matrícula antiga que ainda
+    # não tenha recebido seu DiárioDeBordo.
+    diario, _ = DiarioDeBordo.objects.get_or_create(
+        matricula=matricula,
+    )
+
+    if request.method == "POST":
+        form = RegistroMatriculaForm(
+            request.POST,
+            professor=professor,
+            disciplina=matricula.disciplina,
+        )
+
+        if form.is_valid():
+            # O formulário não permite selecionar o diário.
+            # A view define a associação com o diário correto.
+            registro = form.save(commit=False)
+            registro.diario = diario
+
+            with transaction.atomic():
+                registro.save()
+
+                # Como temas e conteúdos são ManyToManyField,
+                # suas relações são gravadas após salvar o registro.
+                form.save_m2m()
+
+            return redirect(
+                "diario_aluno",
+                aluno_id=aluno.pk,
+                matricula_id=matricula.pk,
+            )
+
+    else:
+        form = RegistroMatriculaForm(
+            professor=professor,
+            disciplina=matricula.disciplina,
+        )
+
+    registros = (
+        diario.registros
+        .prefetch_related("temas", "conteudos")
+        .all()
+    )
+
+    return render(
+        request,
+        "core/diario/registro_diario.html",
+        {
+            "aluno": aluno,
+            "matricula": matricula,
+            "disciplina": matricula.disciplina,
+            "diario": diario,
+            "registros": registros,
+            "form": form,
+        },
+    )

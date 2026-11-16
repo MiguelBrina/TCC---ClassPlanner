@@ -1,1 +1,46 @@
-Mostrar todas a entidades
+{% extends "base.html" %}
+
+{% block content %}
+
+<h1>Olá {{ professor.nome_exibicao }}!</h1>
+
+<p>
+    Esta é a área de alunos, onde você pode organizar
+    as informações e acompanhar os Diários de Bordo.
+</p>
+
+<p>
+    <a href="{% url 'cadastrar_aluno' %}">
+        Cadastrar aluno
+    </a>
+</p>
+
+<h2>Alunos cadastrados</h2>
+
+{% for aluno in alunos %}
+    <section>
+        <!-- Clicar no nome abre o detalhe do aluno. -->
+        <h3>
+            <a href="{% url 'detalhe_aluno' aluno_id=aluno.id %}">
+                {{ aluno.nome_completo }}
+            </a>
+        </h3>
+
+        <p>Telefone: {{ aluno.telefone }}</p>
+
+        <!-- Por enquanto, a edição permanece em uma página própria. -->
+        <a href="{% url 'editar_aluno' aluno_id=aluno.id %}">
+            Editar informações
+        </a>
+    </section>
+{% empty %}
+    <p>Você ainda não cadastrou nenhum aluno.</p>
+{% endfor %}
+
+<p>
+    <a href="{% url 'painel' %}">
+        Voltar ao painel
+    </a>
+</p>
+
+{% endblock %}

@@ -46,9 +46,11 @@ USE_X_FORWARDED_HOST = True
 SOCIALACCOUNT_PROVIDERS = {
     "google": {
         "EMAIL_AUTHENTICATION": True,
-        "EMAIL_AUTHENTICATION_AUTO_CONNECT": True,
     },
 }
+# Associa automaticamente o Google à conta local existente
+# quando a autenticação por e-mail verificado for aplicada.
+SOCIALACCOUNT_EMAIL_AUTHENTICATION_AUTO_CONNECT = True
 
 INSTALLED_APPS = [
     "django.contrib.admin",

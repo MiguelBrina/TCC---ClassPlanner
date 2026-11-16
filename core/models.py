@@ -94,6 +94,7 @@ class Matricula(models.Model):
         on_delete=models.CASCADE,
         related_name="matriculas"
     )
+
     disciplina = models.ForeignKey(
         Disciplina,
         on_delete=models.CASCADE,
@@ -104,7 +105,14 @@ class Matricula(models.Model):
 
     def __str__(self):
         return f"{self.aluno} - {self.disciplina}"
-#endregion
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["aluno", "disciplina"],
+                name="unique_matricula_aluno_disciplina",
+            ),
+        ]
 
 #region agenda do professor 
 class Aula(models.Model):

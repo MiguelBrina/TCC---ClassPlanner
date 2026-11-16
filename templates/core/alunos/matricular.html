@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>Matricular aluno</h1>
+
+<p>Aluno: {{ aluno.nome_completo }}</p>
+
+<form method="post">
+    {% csrf_token %}
+    {{ form.non_field_errors }}
+    {{ form.as_p }}
+
+    <button type="submit">Confirmar matrícula</button>
+</form>
+
+<p>
+    <a href="{% url 'detalhe_aluno' aluno.id %}">
+        Cancelar e voltar ao aluno
+    </a>
+</p>
+{% endblock %}
