@@ -15,12 +15,12 @@
     flex-wrap: wrap;
     gap: 1rem;
     color: #6b7280;
-    font-size: 0.875rem;
+    font-size: 14px;
 }
 
 .footer-links {
     display: flex;
-    gap: 1.25rem;
+    gap: 20px;
 }
 
 .footer-links a {

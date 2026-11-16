@@ -218,3 +218,26 @@ class Pagamento(models.Model):
         return f"{self.aluno} - {self.mes:%m/%Y} - {status}"
 
 #endregion
+
+class Auditoria(models.Model):
+    OPERACOES = [
+        ("INSERT", "Inserção"),
+        ("UPDATE", "Atualização"),
+        ("DELETE", "Exclusão"),
+    ]
+
+    professor_id = models.IntegerField(null=True, blank=True)
+    tabela = models.CharField(max_length=100)
+    registro_id = models.IntegerField()
+    operacao = models.CharField(max_length=10, choices=OPERACOES)
+    dados_anteriores = models.JSONField(null=True, blank=True)
+    dados_novos = models.JSONField(null=True, blank=True)
+    data_hora = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Auditoria"
+        verbose_name_plural = "Auditorias"
+        ordering = ["-data_hora"]
+
+    def __str__(self):
+        return f"{self.tabela} - {self.operacao} - {self.data_hora}"
