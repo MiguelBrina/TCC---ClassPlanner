@@ -90,6 +90,11 @@ urlpatterns = [
         views.editar_aluno,
         name="editar_aluno",
     ),
+    path(
+    "alunos/<int:aluno_id>/excluir/",
+    views.excluir_aluno,
+    name="excluir_aluno",
+    ),
 
     # Matrícula não aparece como uma área independente do sistema.
     # É uma ação iniciada a partir do detalhe do aluno.
@@ -104,5 +109,11 @@ urlpatterns = [
         "alunos/<int:aluno_id>/matriculas/<int:matricula_id>/diario/",
         views.diario_aluno,
         name="diario_aluno",
+    ),
+    
+    path(
+    "alunos/<int:aluno_id>/matriculas/<int:matricula_id>/excluir/",
+    views.excluir_matricula,
+    name="excluir_matricula",
     ),
 ]

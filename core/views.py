@@ -653,6 +653,20 @@ def editar_aluno(request, aluno_id):
         },
     )
 
+@login_required
+def excluir_aluno(request, aluno_id):
+    professor = request.user.professor
+
+    if request.method == "POST":
+        aluno = get_object_or_404(
+            Aluno,
+            pk=aluno_id,
+            professor=professor,
+        )
+
+        aluno.delete()
+
+    return redirect("lista_alunos")
 
 # ============================================================
 # MATRÍCULA MÚLTIPLA — FLUXO INTERNO
@@ -762,14 +776,15 @@ def diario_aluno(request, aluno_id, matricula_id):
     O aluno e a matrícula são recuperados com filtros de
     propriedade para impedir o acesso cruzado entre professores.
     """
-    print("=== DIAGNÓSTICO DE SESSÃO ===")
-    print("Usuário autenticado:", request.user.is_authenticated)
-    print("ID do usuário:", request.user.id)
-    print("Chave da sessão:", request.session.session_key)
-    print("Sessão existe:", request.session.exists(
-        request.session.session_key
-    ))
-    print("=============================")
+    
+    #print("=== DIAGNÓSTICO DE SESSÃO ===")
+    #print("Usuário autenticado:", request.user.is_authenticated)
+    #print("ID do usuário:", request.user.id)
+    #print("Chave da sessão:", request.session.session_key)
+    #print("Sessão existe:", request.session.exists(
+     #   request.session.session_key
+    #))
+    #print("=============================")
 
 
     professor = request.user.professor
@@ -846,4 +861,24 @@ def diario_aluno(request, aluno_id, matricula_id):
             "registros": registros,
             "form": form,
         },
+    )
+
+@login_required
+def excluir_matricula(request, aluno_id, matricula_id):
+    professor = request.user.professor
+
+    if request.method == "POST":
+        matricula = get_object_or_404(
+            Matricula,
+            pk=matricula_id,
+            aluno_id=aluno_id,
+            aluno__professor=professor,
+            disciplina__professor=professor,
+        )
+
+        matricula.delete()
+
+    return redirect(
+        "detalhe_aluno",
+        aluno_id=aluno_id,
     )

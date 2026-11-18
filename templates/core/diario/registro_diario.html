@@ -2,6 +2,8 @@
 
 {% block content %}
 
+{% load static %}
+
 <h1>Diário de Bordo</h1>
 
 <h2>{{ aluno.nome_completo }}</h2>
@@ -27,7 +29,31 @@
     {{ form.non_field_errors }}
 
     <!-- Data, observação, temas e conteúdos. -->
-    {{ form.as_p }}
+    <p>
+        {{ form.data.label_tag }}
+        {{ form.data }}
+        {{ form.data.errors }}
+    </p>
+
+    <p>
+        {{ form.observacao.label_tag }}
+        {{ form.observacao }}
+        {{ form.observacao.errors }}
+    </p>
+
+    <div id="area-temas">
+        <h3>Selecione os temas</h3>
+
+        {{ form.temas.errors }}
+        {{ form.temas }}
+    </div>
+
+    <div id="area-conteudos" style="display: none;">
+        <h3>Selecione os conteúdos</h3>
+
+        {{ form.conteudos.errors }}
+        {{ form.conteudos }}
+    </div>
 
     <button type="submit">Salvar registro</button>
 </form>
@@ -77,5 +103,7 @@
         Voltar para as informações do aluno
     </a>
 </p>
+
+<script src="{% static 'core/js/registro_diario.js' %}" defer></script>
 
 {% endblock %}

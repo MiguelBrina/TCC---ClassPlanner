@@ -1,4 +1,7 @@
+
 {% extends "base.html" %}
+
+{% load static %}
 
 {% block content %}
 <h1>Detalhe do aluno</h1>
@@ -11,6 +14,16 @@
         Editar aluno
     </a>
 </p>
+
+<form
+    method="post"
+    action="{% url 'excluir_aluno' aluno.id %}"
+    class="form-excluir"
+    data-mensagem="Tem certeza que deseja excluir este aluno? Todas as matrículas e os diários de bordo vinculados também serão excluídos."
+>
+    {% csrf_token %}
+    <button type="submit">Excluir aluno</button>
+</form>
 
 <p>
     <a href="{% url 'matricular_aluno' aluno.id %}">
@@ -29,6 +42,16 @@
         <a href="{% url 'diario_aluno' aluno.id matricula.id %}">
             Abrir Diário de Bordo
         </a>
+
+        <form
+            method="post"
+            action="{% url 'excluir_matricula' aluno.id matricula.id %}"
+            class="form-excluir"
+            data-mensagem="Tem certeza que deseja excluir esta matrícula? O diário de bordo desta disciplina também será excluído."
+        >
+            {% csrf_token %}
+            <button type="submit">Excluir matrícula</button>
+        </form>
     </section>
 {% empty %}
     <p>Este aluno ainda não possui disciplinas matriculadas.</p>
@@ -37,4 +60,6 @@
 <p>
     <a href="{% url 'lista_alunos' %}">Voltar para alunos</a>
 </p>
+
+<script src="{% static 'core/js/confirmar_exclusao.js' %}" defer></script>
 {% endblock %}

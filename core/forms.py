@@ -20,6 +20,26 @@ from .models import (
 )
 
 
+class ConteudoCheckboxSelectMultiple(forms.CheckboxSelectMultiple):
+    def create_option(
+        self, name, value, label, selected, index,
+        subindex=None, attrs=None
+    ):
+        option = super().create_option(
+            name, value, label, selected, index,
+            subindex=subindex, attrs=attrs
+        )
+
+        if value:
+            conteudo = value.instance
+
+            if conteudo:
+                option["attrs"]["data-tema-id"] = str(
+                    conteudo.tema_id
+                )
+
+        return option
+
 # ============================================================
 # 1. FORMULÁRIO DE DISCIPLINA
 # ============================================================
@@ -128,7 +148,26 @@ class AlunoForm(forms.ModelForm):
         model = Aluno
         fields = ["nome_completo", "telefone"]
 
+    def clean_telefone(self):
+        telefone = self.cleaned_data["telefone"]
 
+        # Remove tudo que não for número.
+        numeros = re.sub(r"\D", "", telefone)
+
+        # Aceita telefones com 10 ou 11 dígitos.
+        if len(numeros) not in [10, 11]:
+            raise forms.ValidationError(
+                "Informe um telefone válido com DDD."
+            )
+
+        # Formata o telefone.
+        ddd = numeros[:2]
+        numero = numeros[2:]
+
+        if len(numero) == 9:
+            return f"({ddd}) {numero[:5]}-{numero[5:]}"
+
+        return f"({ddd}) {numero[:4]}-{numero[4:]}"
 # ============================================================
 # 5. FORMULÁRIO DE MATRÍCULA INDIVIDUAL
 # ============================================================
@@ -712,7 +751,7 @@ class RegistroMatriculaForm(forms.ModelForm):
                 attrs={"rows": 3}
             ),
             "temas": forms.CheckboxSelectMultiple(),
-            "conteudos": forms.CheckboxSelectMultiple(),
+            "conteudos": ConteudoCheckboxSelectMultiple(),
         }
 
     def __init__(
@@ -763,16 +802,34 @@ class RegistroMatriculaForm(forms.ModelForm):
                 Conteudo.objects.none()
             )
 
+   
     def clean(self):
         dados = super().clean()
 
-        # A view ainda precisa validar e recuperar a matrícula
-        # com filtro de professor. Este formulário também recusa
-        # uma disciplina que pertença a outra conta.
         if not self.disciplina_autorizada:
             raise forms.ValidationError(
                 "Não é permitido registrar informações nesta disciplina."
             )
+
+        temas = dados.get("temas")
+        conteudos = dados.get("conteudos")
+
+        if conteudos and not temas:
+            self.add_error(
+                "temas",
+                "Selecione pelo menos um tema para escolher os conteúdos."
+            )
+
+        elif temas and conteudos:
+            temas_ids = temas.values_list("id", flat=True)
+
+            for conteudo in conteudos:
+                if conteudo.tema_id not in temas_ids:
+                    self.add_error(
+                        "conteudos",
+                        "Os conteúdos selecionados devem pertencer aos temas escolhidos."
+                    )
+                    break
 
         return dados
 
