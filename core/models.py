@@ -122,6 +122,17 @@ class Aula(models.Model):
         related_name="aulas"
     )
 
+     # Bloco semanal da agenda em que esta aula acontece.
+    # OneToOneField garante que um bloco não receba duas aulas.
+    # null=True mantém compatibilidade com aulas antigas.
+    disponibilidade = models.OneToOneField(
+        "conta.DisponibilidadeProfessor",
+        on_delete=models.PROTECT,
+        related_name="aula",
+        null=True,
+        blank=True,
+    )
+
     aluno = models.ForeignKey(
         Aluno,
         on_delete=models.CASCADE,
@@ -134,13 +145,21 @@ class Aula(models.Model):
         related_name="aulas"
     )
 
-    data = models.DateField()
-    horario = models.TimeField()
+    # Campos antigos, mantidos temporariamente para preservar
+    # compatibilidade com os registros de aulas anteriores.
+    data = models.DateField(
+        null=True,
+        blank=True,
+    )
 
+    horario = models.TimeField(
+        null=True,
+        blank=True,
+    )
     def __str__(self):
-        return f"{self.aluno} - {self.disciplina} - {self.data} {self.horario}"
+            return f"{self.aluno} - {self.disciplina} - {self.data} {self.horario}"
 
-#endregion
+    #endregion
 
 #region registros de aula
 class DiarioDeBordo(models.Model):

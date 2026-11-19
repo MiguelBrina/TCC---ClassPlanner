@@ -1,3 +1,4 @@
+
 {% extends "base.html" %}
 
 {% block content %}
@@ -17,25 +18,112 @@
 
 <h2>Alunos cadastrados</h2>
 
-{% for aluno in alunos %}
-    <section>
-        <!-- Clicar no nome abre o detalhe do aluno. -->
-        <h3>
-            <a href="{% url 'detalhe_aluno' aluno_id=aluno.id %}">
-                {{ aluno.nome_completo }}
-            </a>
-        </h3>
+<!-- Área de pesquisa -->
+<section id="area-pesquisa">
 
-        <p>Telefone: {{ aluno.telefone }}</p>
+    <form method="GET" id="form-pesquisa">
 
-        <!-- Por enquanto, a edição permanece em uma página própria. -->
-        <a href="{% url 'editar_aluno' aluno_id=aluno.id %}">
-            Editar informações
+        <label for="busca">Pesquisar aluno:</label>
+
+        <input
+            type="text"
+            name="q"
+            id="busca"
+            placeholder="Digite o nome do aluno..."
+            value="{{ busca }}"
+        >
+
+        <button type="submit" id="botao-pesquisar">
+            Pesquisar
+        </button>
+
+    </form>
+
+</section>
+
+<!-- Área de filtros -->
+<section id="area-filtros">
+
+    <h3>Filtrar alunos por disciplina</h3>
+
+    <form method="GET" id="form-filtros">
+
+        <!-- Mantém a pesquisa por nome ao filtrar -->
+        <input
+            type="hidden"
+            name="q"
+            value="{{ busca }}"
+        >
+
+        <div id="lista-disciplinas-filtro">
+
+            {% for disciplina in disciplinas %}
+
+                <label class="filtro-disciplina">
+                    <input
+                        type="checkbox"
+                        name="disciplinas"
+                        value="{{ disciplina.id }}"
+                        {% if disciplina.id|stringformat:"s" in disciplinas_selecionadas %}checked{% endif %}
+                    >
+
+                    {{ disciplina.nome }}
+                </label>
+
+            {% empty %}
+
+                <p>Você ainda não possui disciplinas cadastradas.</p>
+
+            {% endfor %}
+
+        </div>
+
+        <button type="submit" id="botao-filtrar">
+            Filtrar
+        </button>
+
+    </form>
+
+    <p>
+        <a href="{% url 'lista_alunos' %}" id="limpar-filtros">
+            Limpar pesquisa e filtros
         </a>
-    </section>
-{% empty %}
-    <p>Você ainda não cadastrou nenhum aluno.</p>
-{% endfor %}
+    </p>
+
+</section>
+
+<!-- Resultados -->
+<section id="resultados-alunos">
+
+    <h3>Resultados</h3>
+
+    {% for aluno in alunos %}
+
+        <article class="aluno-card">
+
+            <h3>
+                <a href="{% url 'detalhe_aluno' aluno_id=aluno.id %}">
+                    {{ aluno.nome_completo }}
+                </a>
+            </h3>
+
+            <p>Telefone: {{ aluno.telefone }}</p>
+
+            <a href="{% url 'editar_aluno' aluno_id=aluno.id %}">
+                Editar informações
+            </a>
+
+        </article>
+
+    {% empty %}
+
+        <p>
+            Nenhum aluno encontrado com os critérios selecionados.
+        </p>
+
+    {% endfor %}
+
+</section>
 
 <p>
     <a href="{% url 'painel' %}">

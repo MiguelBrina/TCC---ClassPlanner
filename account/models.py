@@ -43,6 +43,12 @@ class DisponibilidadeProfessor(models.Model):
         related_name="disponibilidades"
     )
 
+    agenda = models.ForeignKey(
+        "AgendaProfessor",
+        on_delete=models.CASCADE,
+        related_name="horarios",
+    )
+
     dia_semana = models.PositiveSmallIntegerField(
         choices=DIAS_SEMANA
     )
@@ -69,3 +75,30 @@ class DisponibilidadeProfessor(models.Model):
             f"{self.get_dia_semana_display()} - "
             f"{self.horario}"
         )
+
+class AgendaProfessor(models.Model):
+    professor = models.ForeignKey(
+        Professor,
+        on_delete=models.CASCADE,
+        related_name="agendas"
+    )
+
+    nome = models.CharField(
+        max_length=100,
+        default="Agenda principal"
+    )
+
+    ativa = models.BooleanField(
+        default=True
+    )
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["professor", "nome"],
+                name="unique_agenda_professor_nome"
+            )
+        ]
+
+    def __str__(self):
+        return f"{self.professor} - {self.nome}"

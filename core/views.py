@@ -1,10 +1,7 @@
+
 from django.contrib.auth.decorators import login_required
 from django.db import IntegrityError, transaction
-from django.shortcuts import (
-    get_object_or_404,
-    redirect,
-    render,
-)
+from django.shortcuts import get_object_or_404, redirect, render
 
 from .forms import (
     AlunoForm,
@@ -26,69 +23,267 @@ from .models import (
     Tema,
 )
 
+# Modelos responsáveis pela organização da agenda.
+from account.models import AgendaProfessor, DisponibilidadeProfessor
+
+
 def index(request):
     if request.user.is_authenticated:
         return redirect("painel")
 
-    return render(
-        request,
-        "index.html",
-    )
+    return render(request, "index.html")
 
+
+# ============================================================
+# AGENDA
+# ============================================================
 
 @login_required
 def painel(request):
+    """
+    Exibe e edita a agenda semanal do professor.
+
+    As alterações só são gravadas quando o professor clica
+    em Salvar alterações.
+    """
+
     professor = request.user.professor
 
-    disponibilidades = (
-        professor.disponibilidades
-        .all()
-        .order_by(
-            "dia_semana",
-            "horario",
-        )
+    # Recupera ou cria a agenda principal.
+    agenda, _ = AgendaProfessor.objects.get_or_create(
+        professor=professor,
+        nome="Agenda principal",
     )
 
+    # Recupera os blocos de disponibilidade da agenda.
+    disponibilidades = list(
+        DisponibilidadeProfessor.objects
+        .filter(
+            professor=professor,
+            agenda=agenda,
+        )
+        .select_related(
+            "aula__aluno",
+            "aula__disciplina",
+        )
+        .order_by("dia_semana", "horario")
+    )
+
+    # Identifica os dias configurados.
     dias = {}
 
-    for disponibilidade in disponibilidades:
+    for bloco in disponibilidades:
         dias.setdefault(
-            disponibilidade.dia_semana,
-            {
-                "nome": (
-                    disponibilidade
-                    .get_dia_semana_display()
-                ),
-                "horarios": [],
-            },
+            bloco.dia_semana,
+            {"nome": bloco.get_dia_semana_display()},
         )
 
-        dias[
-            disponibilidade.dia_semana
-        ]["horarios"].append(
-            disponibilidade.horario
-        )
+    dias = dict(sorted(dias.items()))
 
-    horarios = sorted(
-        {
-            disponibilidade.horario
-            for disponibilidade in disponibilidades
-        }
+    # Recupera os horários sem repetição.
+    horarios = sorted({
+        bloco.horario
+        for bloco in disponibilidades
+    })
+
+    # Organiza os blocos por dia e horário.
+    mapa_disponibilidades = {
+        (bloco.dia_semana, bloco.horario): bloco
+        for bloco in disponibilidades
+    }
+
+    # Recupera as matrículas pertencentes ao professor.
+    matriculas = list(
+        Matricula.objects
+        .filter(
+            aluno__professor=professor,
+            disciplina__professor=professor,
+        )
+        .select_related("aluno", "disciplina")
+        .order_by("aluno__nome_completo", "disciplina__nome")
     )
 
-    aulas = (
-        Aula.objects
+    # Recupera os alunos do professor.
+    alunos = list(
+        Aluno.objects
         .filter(professor=professor)
-        .select_related(
-            "aluno",
-            "disciplina",
-        )
+        .order_by("nome_completo")
     )
+
+    # --------------------------------------------------------
+    # PROCESSAMENTO DO FORMULÁRIO
+    # --------------------------------------------------------
+
+    if request.method == "POST":
+
+        acao = request.POST.get("acao")
+
+        # Cancelar não grava nenhuma alteração.
+        if acao == "cancelar":
+            return redirect("painel")
+
+        if acao == "salvar":
+
+            erro = None
+            atribuicoes = []
+
+            # Primeiro validamos todos os campos.
+            for bloco in disponibilidades:
+
+                aluno_id = request.POST.get(
+                    f"aluno_{bloco.pk}", ""
+                ).strip()
+
+                disciplina_id = request.POST.get(
+                    f"disciplina_{bloco.pk}", ""
+                ).strip()
+
+                # Os dois campos vazios deixam o horário livre.
+                if not aluno_id and not disciplina_id:
+                    atribuicoes.append((bloco, None, None))
+                    continue
+
+                # Não permite selecionar somente um dos campos.
+                if not aluno_id or not disciplina_id:
+                    erro = (
+                        "Selecione um aluno e uma disciplina "
+                        "ou deixe os dois campos vazios."
+                    )
+                    break
+
+                # Verifica se existe matrícula válida.
+                matricula = (
+                    Matricula.objects
+                    .filter(
+                        aluno_id=aluno_id,
+                        disciplina_id=disciplina_id,
+                        aluno__professor=professor,
+                        disciplina__professor=professor,
+                    )
+                    .select_related("aluno", "disciplina")
+                    .first()
+                )
+
+                if not matricula:
+                    erro = (
+                        "A combinação de aluno e disciplina "
+                        "é inválida. Confira as matrículas."
+                    )
+                    break
+
+                atribuicoes.append(
+                    (
+                        bloco,
+                        matricula.aluno,
+                        matricula.disciplina,
+                    )
+                )
+
+            # Só salva se todas as atribuições forem válidas.
+            if erro is None:
+
+                try:
+                    with transaction.atomic():
+
+                        for bloco, aluno, disciplina in atribuicoes:
+
+                            # Horário vazio: remove a aula do bloco.
+                            if aluno is None:
+
+                                Aula.objects.filter(
+                                    disponibilidade=bloco
+                                ).delete()
+
+                            else:
+
+                                # Cria ou atualiza a aula do bloco.
+                                Aula.objects.update_or_create(
+                                    disponibilidade=bloco,
+                                    defaults={
+                                        "professor": professor,
+                                        "aluno": aluno,
+                                        "disciplina": disciplina,
+                                        "data": None,
+                                        "horario": None,
+                                    },
+                                )
+
+                except IntegrityError:
+
+                    erro = (
+                        "Não foi possível salvar a agenda. "
+                        "Verifique os horários e tente novamente."
+                    )
+
+                else:
+                    return redirect("painel")
+
+            modo_edicao = True
+
+        else:
+            erro = "Ação não reconhecida."
+            modo_edicao = True
+
+    else:
+
+        # Abre em modo de visualização por padrão.
+        modo_edicao = request.GET.get("editar") == "1"
+        erro = None
+
+    # --------------------------------------------------------
+    # MONTAGEM DA GRADE SEMANAL
+    # --------------------------------------------------------
+
+    grade = []
+
+    for horario in horarios:
+
+        celulas = []
+
+        for numero_dia, dia in dias.items():
+
+            bloco = mapa_disponibilidades.get(
+                (numero_dia, horario)
+            )
+
+            aula = (
+                getattr(bloco, "aula", None)
+                if bloco
+                else None
+            )
+
+            # Recupera a matrícula correspondente à aula.
+            matricula_atual = None
+
+            if aula:
+                matricula_atual = next(
+                    (
+                        item for item in matriculas
+                        if item.aluno_id == aula.aluno_id
+                        and item.disciplina_id == aula.disciplina_id
+                    ),
+                    None,
+                )
+
+            celulas.append({
+                "disponibilidade": bloco,
+                "aula": aula,
+                "matricula": matricula_atual,
+            })
+
+        grade.append({
+            "horario": horario,
+            "celulas": celulas,
+        })
 
     contexto = {
+        "agenda": agenda,
         "dias": dias,
-        "horarios": horarios,
-        "aulas": aulas,
+        "grade": grade,
+        "alunos": alunos,
+        "matriculas": matriculas,
+        "modo_edicao": modo_edicao,
+        "erro": erro,
     }
 
     return render(
@@ -98,11 +293,13 @@ def painel(request):
     )
 
 
-#region Disciplinas, temas e conteúdos
-
+# ============================================================
+# DISCIPLINAS
+# ============================================================
 
 @login_required
 def lista_disciplinas(request):
+
     professor = request.user.professor
 
     disciplinas = (
@@ -114,21 +311,17 @@ def lista_disciplinas(request):
     form = DisciplinaForm()
 
     if request.method == "POST":
+
         form = DisciplinaForm(request.POST)
 
         if form.is_valid():
-            disciplina = form.save(
-                commit=False
-            )
 
+            disciplina = form.save(commit=False)
             disciplina.professor = professor
 
             try:
                 disciplina.save()
-
-                return redirect(
-                    "lista_disciplinas"
-                )
+                return redirect("lista_disciplinas")
 
             except IntegrityError:
                 form.add_error(
@@ -151,6 +344,7 @@ def lista_disciplinas(request):
 
 @login_required
 def editar_disciplina(request, pk):
+
     professor = request.user.professor
 
     disciplina = get_object_or_404(
@@ -160,9 +354,7 @@ def editar_disciplina(request, pk):
     )
 
     if request.method != "POST":
-        return redirect(
-            "lista_disciplinas"
-        )
+        return redirect("lista_disciplinas")
 
     form = DisciplinaForm(
         request.POST,
@@ -170,12 +362,10 @@ def editar_disciplina(request, pk):
     )
 
     if form.is_valid():
+
         try:
             form.save()
-
-            return redirect(
-                "lista_disciplinas"
-            )
+            return redirect("lista_disciplinas")
 
         except IntegrityError:
             form.add_error(
@@ -204,9 +394,11 @@ def editar_disciplina(request, pk):
 
 @login_required
 def excluir_disciplina(request, pk):
+
     professor = request.user.professor
 
     if request.method == "POST":
+
         disciplina = get_object_or_404(
             Disciplina,
             pk=pk,
@@ -215,13 +407,16 @@ def excluir_disciplina(request, pk):
 
         disciplina.delete()
 
-    return redirect(
-        "lista_disciplinas"
-    )
+    return redirect("lista_disciplinas")
 
+
+# ============================================================
+# TEMAS
+# ============================================================
 
 @login_required
 def lista_temas(request, disciplina_id):
+
     professor = request.user.professor
 
     disciplina = get_object_or_404(
@@ -230,22 +425,17 @@ def lista_temas(request, disciplina_id):
         professor=professor,
     )
 
-    temas = (
-        disciplina.temas
-        .all()
-        .order_by("nome")
-    )
+    temas = disciplina.temas.all().order_by("nome")
 
     form = TemaForm()
 
     if request.method == "POST":
+
         form = TemaForm(request.POST)
 
         if form.is_valid():
-            tema = form.save(
-                commit=False
-            )
 
+            tema = form.save(commit=False)
             tema.disciplina = disciplina
 
             try:
@@ -278,6 +468,7 @@ def lista_temas(request, disciplina_id):
 
 @login_required
 def editar_tema(request, pk):
+
     professor = request.user.professor
 
     tema = get_object_or_404(
@@ -298,6 +489,7 @@ def editar_tema(request, pk):
     )
 
     if form.is_valid():
+
         try:
             form.save()
 
@@ -312,11 +504,7 @@ def editar_tema(request, pk):
                 "Já existe um tema com este nome.",
             )
 
-    temas = (
-        tema.disciplina.temas
-        .all()
-        .order_by("nome")
-    )
+    temas = tema.disciplina.temas.all().order_by("nome")
 
     return render(
         request,
@@ -334,9 +522,11 @@ def editar_tema(request, pk):
 
 @login_required
 def excluir_tema(request, pk):
+
     professor = request.user.professor
 
     if request.method == "POST":
+
         tema = get_object_or_404(
             Tema,
             pk=pk,
@@ -344,7 +534,6 @@ def excluir_tema(request, pk):
         )
 
         disciplina_id = tema.disciplina.id
-
         tema.delete()
 
         return redirect(
@@ -352,13 +541,16 @@ def excluir_tema(request, pk):
             disciplina_id=disciplina_id,
         )
 
-    return redirect(
-        "lista_disciplinas"
-    )
+    return redirect("lista_disciplinas")
 
+
+# ============================================================
+# CONTEÚDOS
+# ============================================================
 
 @login_required
 def lista_conteudos(request, tema_id):
+
     professor = request.user.professor
 
     tema = get_object_or_404(
@@ -367,22 +559,17 @@ def lista_conteudos(request, tema_id):
         disciplina__professor=professor,
     )
 
-    conteudos = (
-        tema.conteudos
-        .all()
-        .order_by("nome")
-    )
+    conteudos = tema.conteudos.all().order_by("nome")
 
     form = ConteudoForm()
 
     if request.method == "POST":
+
         form = ConteudoForm(request.POST)
 
         if form.is_valid():
-            conteudo = form.save(
-                commit=False
-            )
 
+            conteudo = form.save(commit=False)
             conteudo.tema = tema
 
             try:
@@ -415,6 +602,7 @@ def lista_conteudos(request, tema_id):
 
 @login_required
 def editar_conteudo(request, pk):
+
     professor = request.user.professor
 
     conteudo = get_object_or_404(
@@ -435,6 +623,7 @@ def editar_conteudo(request, pk):
     )
 
     if form.is_valid():
+
         try:
             form.save()
 
@@ -449,11 +638,7 @@ def editar_conteudo(request, pk):
                 "Já existe um conteúdo com este nome.",
             )
 
-    conteudos = (
-        conteudo.tema.conteudos
-        .all()
-        .order_by("nome")
-    )
+    conteudos = conteudo.tema.conteudos.all().order_by("nome")
 
     return render(
         request,
@@ -471,9 +656,11 @@ def editar_conteudo(request, pk):
 
 @login_required
 def excluir_conteudo(request, pk):
+
     professor = request.user.professor
 
     if request.method == "POST":
+
         conteudo = get_object_or_404(
             Conteudo,
             pk=pk,
@@ -481,7 +668,6 @@ def excluir_conteudo(request, pk):
         )
 
         tema_id = conteudo.tema.id
-
         conteudo.delete()
 
         return redirect(
@@ -489,11 +675,9 @@ def excluir_conteudo(request, pk):
             tema_id=tema_id,
         )
 
-    return redirect(
-        "lista_disciplinas"
-    )
+    return redirect("lista_disciplinas")
 
-#endregion
+
 # ============================================================
 # ALUNOS
 # ============================================================
@@ -502,17 +686,32 @@ def excluir_conteudo(request, pk):
 def lista_alunos(request):
     """
     Exibe os alunos do professor autenticado.
-
-    O filtro por professor é essencial: não devemos misturar
-    os alunos pertencentes às contas de professores diferentes.
+    Permite pesquisar por nome e filtrar por disciplina.
     """
 
     professor = request.user.professor
 
-    alunos = (
-        Aluno.objects
+    busca = request.GET.get("q", "").strip()
+    disciplinas_selecionadas = request.GET.getlist("disciplinas")
+
+    alunos = Aluno.objects.filter(professor=professor)
+
+    if busca:
+        alunos = alunos.filter(
+            nome_completo__icontains=busca
+        )
+
+    if disciplinas_selecionadas:
+        alunos = alunos.filter(
+            matriculas__disciplina__id__in=disciplinas_selecionadas
+        ).distinct()
+
+    alunos = alunos.order_by("nome_completo")
+
+    disciplinas = (
+        Disciplina.objects
         .filter(professor=professor)
-        .order_by("nome_completo")
+        .order_by("nome")
     )
 
     return render(
@@ -521,38 +720,28 @@ def lista_alunos(request):
         {
             "professor": professor,
             "alunos": alunos,
-
+            "busca": busca,
+            "disciplinas": disciplinas,
+            "disciplinas_selecionadas": disciplinas_selecionadas,
         },
     )
 
 
 @login_required
 def cadastrar_aluno(request):
-    """
-    Exibe o formulário de cadastro e salva um aluno válido.
-
-    GET  -> apresenta o formulário.
-    POST -> valida e tenta salvar os dados enviados.
-    """
 
     professor = request.user.professor
 
     if request.method == "POST":
+
         form = AlunoForm(request.POST)
 
         if form.is_valid():
-            # commit=False cria o objeto em memória, mas ainda
-            # não o grava no banco de dados.
+
             aluno = form.save(commit=False)
-
-            # O professor é definido pelo servidor, nunca por
-            # um campo enviado pelo navegador.
             aluno.professor = professor
-
             aluno.save()
 
-            # Após cadastrar, vamos ao detalhe para permitir
-            # a matrícula e o acesso direto aos diários.
             return redirect(
                 "detalhe_aluno",
                 aluno_id=aluno.pk,
@@ -572,17 +761,9 @@ def cadastrar_aluno(request):
 
 @login_required
 def detalhe_aluno(request, aluno_id):
-    """
-    Mostra os dados do aluno e suas disciplinas matriculadas.
-
-    A matrícula é um relacionamento interno. Por isso, a tela
-    apresenta o acesso aos diários diretamente, sem exigir que
-    o professor navegue por uma aba de matrículas.
-    """
 
     professor = request.user.professor
 
-    # O aluno só pode ser encontrado se pertencer ao professor.
     aluno = get_object_or_404(
         Aluno,
         pk=aluno_id,
@@ -611,12 +792,6 @@ def detalhe_aluno(request, aluno_id):
 
 @login_required
 def editar_aluno(request, aluno_id):
-    """
-    Edita os dados de um aluno já cadastrado.
-
-    O professor continua sendo o mesmo, pois esse campo não
-    faz parte do AlunoForm.
-    """
 
     professor = request.user.professor
 
@@ -627,6 +802,7 @@ def editar_aluno(request, aluno_id):
     )
 
     if request.method == "POST":
+
         form = AlunoForm(
             request.POST,
             instance=aluno,
@@ -641,7 +817,6 @@ def editar_aluno(request, aluno_id):
             )
 
     else:
-        # instance preenche o formulário com os dados existentes.
         form = AlunoForm(instance=aluno)
 
     return render(
@@ -653,11 +828,14 @@ def editar_aluno(request, aluno_id):
         },
     )
 
+
 @login_required
 def excluir_aluno(request, aluno_id):
+
     professor = request.user.professor
 
     if request.method == "POST":
+
         aluno = get_object_or_404(
             Aluno,
             pk=aluno_id,
@@ -668,26 +846,20 @@ def excluir_aluno(request, aluno_id):
 
     return redirect("lista_alunos")
 
+
 # ============================================================
-# MATRÍCULA MÚLTIPLA — FLUXO INTERNO
+# MATRÍCULA MÚLTIPLA
 # ============================================================
 
 @login_required
 def matricular_aluno(request, aluno_id):
     """
-    Permite selecionar várias disciplinas para um único aluno.
-
-    Após validar o formulário:
-        1. Cria ou recupera cada matrícula.
-        2. Cria ou recupera o DiárioDeBordo correspondente.
-        3. Redireciona diretamente ao detalhe do aluno.
-
-    Não existe uma tela intermediária de matrículas.
+    Permite matricular um aluno em várias disciplinas.
+    Também garante a criação do diário correspondente.
     """
 
     professor = request.user.professor
 
-    # A autorização acontece antes da criação do formulário.
     aluno = get_object_or_404(
         Aluno,
         pk=aluno_id,
@@ -695,6 +867,7 @@ def matricular_aluno(request, aluno_id):
     )
 
     if request.method == "POST":
+
         form = MatricularDisciplinasForm(
             request.POST,
             professor=professor,
@@ -702,17 +875,15 @@ def matricular_aluno(request, aluno_id):
         )
 
         if form.is_valid():
+
             data_inicio = form.cleaned_data["data_inicio"]
             disciplinas = form.cleaned_data["disciplinas"]
 
             try:
-                # Tudo dentro deste bloco é tratado como uma
-                # transação: falhas provocam o rollback.
                 with transaction.atomic():
 
                     for disciplina in disciplinas:
-                        # get_or_create evita gerar outra matrícula
-                        # para um relacionamento já existente.
+
                         matricula, criada = (
                             Matricula.objects.get_or_create(
                                 aluno=aluno,
@@ -723,18 +894,12 @@ def matricular_aluno(request, aluno_id):
                             )
                         )
 
-                        # Cada matrícula precisa de exatamente
-                        # um DiárioDeBordo.
-                        #
-                        # O OneToOneField do modelo também reforça
-                        # essa regra no banco de dados.
                         DiarioDeBordo.objects.get_or_create(
                             matricula=matricula,
                         )
 
             except IntegrityError:
-                # Uma mensagem de erro é adicionada ao formulário.
-                # O usuário permanece na tela e pode tentar novamente.
+
                 form.add_error(
                     None,
                     "Não foi possível concluir todas as matrículas. "
@@ -742,14 +907,13 @@ def matricular_aluno(request, aluno_id):
                 )
 
             else:
-                # Retorno direto ao aluno, onde os diários estarão
-                # disponíveis para acesso.
                 return redirect(
                     "detalhe_aluno",
                     aluno_id=aluno.pk,
                 )
 
     else:
+
         form = MatricularDisciplinasForm(
             professor=professor,
             aluno=aluno,
@@ -768,24 +932,12 @@ def matricular_aluno(request, aluno_id):
 # ============================================================
 # DIÁRIO DE BORDO
 # ============================================================
+
 @login_required
 def diario_aluno(request, aluno_id, matricula_id):
     """
     Abre o diário da disciplina associada à matrícula.
-
-    O aluno e a matrícula são recuperados com filtros de
-    propriedade para impedir o acesso cruzado entre professores.
     """
-    
-    #print("=== DIAGNÓSTICO DE SESSÃO ===")
-    #print("Usuário autenticado:", request.user.is_authenticated)
-    #print("ID do usuário:", request.user.id)
-    #print("Chave da sessão:", request.session.session_key)
-    #print("Sessão existe:", request.session.exists(
-     #   request.session.session_key
-    #))
-    #print("=============================")
-
 
     professor = request.user.professor
 
@@ -806,13 +958,12 @@ def diario_aluno(request, aluno_id, matricula_id):
     )
 
     # Garante que a matrícula tenha um diário.
-    # Isso também permite abrir uma matrícula antiga que ainda
-    # não tenha recebido seu DiárioDeBordo.
     diario, _ = DiarioDeBordo.objects.get_or_create(
         matricula=matricula,
     )
 
     if request.method == "POST":
+
         form = RegistroMatriculaForm(
             request.POST,
             professor=professor,
@@ -820,16 +971,15 @@ def diario_aluno(request, aluno_id, matricula_id):
         )
 
         if form.is_valid():
-            # O formulário não permite selecionar o diário.
-            # A view define a associação com o diário correto.
+
             registro = form.save(commit=False)
             registro.diario = diario
 
             with transaction.atomic():
+
                 registro.save()
 
-                # Como temas e conteúdos são ManyToManyField,
-                # suas relações são gravadas após salvar o registro.
+                # Salva as relações ManyToMany.
                 form.save_m2m()
 
             return redirect(
@@ -839,6 +989,7 @@ def diario_aluno(request, aluno_id, matricula_id):
             )
 
     else:
+
         form = RegistroMatriculaForm(
             professor=professor,
             disciplina=matricula.disciplina,
@@ -863,11 +1014,18 @@ def diario_aluno(request, aluno_id, matricula_id):
         },
     )
 
+
+# ============================================================
+# EXCLUIR MATRÍCULA
+# ============================================================
+
 @login_required
 def excluir_matricula(request, aluno_id, matricula_id):
+
     professor = request.user.professor
 
     if request.method == "POST":
+
         matricula = get_object_or_404(
             Matricula,
             pk=matricula_id,

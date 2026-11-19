@@ -1,81 +1,277 @@
+
 {% extends "base.html" %}
+{% load static %}
 
 {% block content %}
 
+<link rel="stylesheet" href="{% static 'core/styles/agenda.css' %}">
+<script src="{% static 'core/js/agenda.js' %}" defer></script>
+
 <div class="agenda-container">
 
+    <!-- Cabeçalho da agenda -->
+    <header class="agenda-topo">
 
-<h1>Agenda</h1>
+        <div>
+            <h1>Agenda</h1>
 
-{% if dias %}
-
-    <div class="agenda-grid">
-
-        <!-- Cabeçalho -->
-        <div class="agenda-header agenda-horario">
-            Horário
+            <p class="agenda-subtitulo">
+                {% if modo_edicao %}
+                    Organize os alunos e as disciplinas de cada horário.
+                {% else %}
+                    Visualize seus horários semanais.
+                {% endif %}
+            </p>
         </div>
 
-        {% for numero_dia, dia in dias.items %}
-            <div class="agenda-header">
-                {{ dia.nome }}
-            </div>
-        {% endfor %}
+        {% if dias %}
+            {% if modo_edicao %}
 
+                <div class="agenda-acoes">
 
-        <!-- Horários -->
-        {% for horario in horarios %}
+                    <button
+                        type="submit"
+                        form="form-agenda"
+                        name="acao"
+                        value="salvar"
+                        class="agenda-botao agenda-botao-salvar">
+                        Salvar alterações
+                    </button>
 
-            <div class="agenda-horario">
-                {{ horario|time:"H:i" }}
-            </div>
-
-            {% for numero_dia, dia in dias.items %}
-
-                <div class="agenda-cell">
-
-                    {% for aula in aulas %}
-
-                        {% if aula.horario == horario %}
-
-                            {% if aula.data.weekday == numero_dia %}
-
-                                <div class="aula">
-                                    <strong>
-                                        {{ aula.aluno.nome_completo }}
-                                    </strong>
-
-                                    <span>
-                                        {{ aula.disciplina.nome }}
-                                    </span>
-                                </div>
-
-                            {% endif %}
-
-                        {% endif %}
-
-                    {% endfor %}
+                    <button
+                        type="submit"
+                        form="form-agenda"
+                        name="acao"
+                        value="cancelar"
+                        formnovalidate
+                        class="agenda-botao agenda-botao-cancelar">
+                        Cancelar
+                    </button>
 
                 </div>
 
-            {% endfor %}
+            {% else %}
 
-        {% endfor %}
+                <a
+                    class="agenda-botao agenda-botao-editar"
+                    href="{% url 'painel' %}?editar=1">
+                    Editar Agenda
+                </a>
 
-    </div>
+            {% endif %}
+        {% endif %}
 
-{% else %}
+    </header>
 
-    <p>
-        Sua agenda ainda não possui dias e horários configurados.
-    </p>
+    <!-- Mensagem de erro -->
+    {% if erro %}
+        <div class="agenda-mensagem-erro" role="alert">
+            {{ erro }}
+        </div>
+    {% endif %}
 
-    <a href="{% url 'configuracao_inicial' %}">
-        Configurar agenda
-    </a>
+    {% if dias %}
 
-{% endif %}
+        <!-- Formulário aparece somente no modo de edição -->
+        {% if modo_edicao %}
+            <form method="post" id="form-agenda">
+                {% csrf_token %}
+        {% endif %}
 
+        <!-- Grade semanal -->
+        <div class="agenda-grade-wrapper">
+
+            <div
+                class="agenda-grid"
+                style="--quantidade-dias: {{ dias|length }};">
+
+                <!-- Cabeçalho -->
+                <div class="agenda-header agenda-horario">
+                    Horário
+                </div>
+
+                {% for numero_dia, dia in dias.items %}
+                    <div class="agenda-header">
+                        {{ dia.nome }}
+                    </div>
+                {% endfor %}
+
+                <!-- Linhas de horários -->
+                {% for linha in grade %}
+
+                    <div class="agenda-horario agenda-horario-celula">
+                        {{ linha.horario|time:"H:i" }}
+                    </div>
+
+                    {% for celula in linha.celulas %}
+
+                        <div class="agenda-cell">
+
+                            {% if celula.disponibilidade %}
+
+                                {% if modo_edicao %}
+
+                                    <!-- Edição do horário -->
+                                    <div class="aula aula-edicao">
+
+                                        <label
+                                            class="agenda-label"
+                                            for="aluno-{{ celula.disponibilidade.pk }}">
+                                            Aluno
+                                        </label>
+
+                                        <select
+                                            id="aluno-{{ celula.disponibilidade.pk }}"
+                                            name="aluno_{{ celula.disponibilidade.pk }}"
+                                            class="agenda-select agenda-aluno">
+
+                                            <option value="">
+                                                Horário livre
+                                            </option>
+
+                                            {% for aluno in alunos %}
+                                                <option
+                                                    value="{{ aluno.pk }}"
+                                                    {% if celula.aula and celula.aula.aluno_id == aluno.pk %}
+                                                        selected
+                                                    {% endif %}>
+                                                    {{ aluno.nome_completo }}
+                                                </option>
+                                            {% endfor %}
+
+                                        </select>
+
+                                        <label
+                                            class="agenda-label"
+                                            for="disciplina-{{ celula.disponibilidade.pk }}">
+                                            Disciplina
+                                        </label>
+
+                                        <select
+                                            id="disciplina-{{ celula.disponibilidade.pk }}"
+                                            name="disciplina_{{ celula.disponibilidade.pk }}"
+                                            class="agenda-select agenda-disciplina">
+
+                                            <option value="">
+                                                Selecione a disciplina
+                                            </option>
+
+                                            {% for matricula in matriculas %}
+                                                <option
+                                                    value="{{ matricula.disciplina_id }}"
+                                                    data-aluno="{{ matricula.aluno_id }}"
+                                                    {% if celula.aula and celula.aula.aluno_id == matricula.aluno_id and celula.aula.disciplina_id == matricula.disciplina_id %}
+                                                        selected
+                                                    {% endif %}>
+                                                    {{ matricula.disciplina.nome }}
+                                                </option>
+                                            {% endfor %}
+
+                                        </select>
+
+                                    </div>
+
+                                {% elif celula.aula %}
+
+                                    <!-- Aula ocupada -->
+                                    {% if celula.matricula %}
+
+                                        <a
+                                            class="aula aula-ocupada"
+                                            href="{% url 'diario_aluno' celula.aula.aluno_id celula.matricula.pk %}"
+                                            style="--cor-disciplina: {{ celula.aula.disciplina.cor }};"
+                                            title="Abrir diário de {{ celula.aula.aluno.nome_completo }}">
+
+                                            <strong>
+                                                {{ celula.aula.aluno.nome_completo }}
+                                            </strong>
+
+                                            <span>
+                                                {{ celula.aula.disciplina.nome }}
+                                            </span>
+
+                                            <small>
+                                                Ver diário
+                                            </small>
+
+                                        </a>
+
+                                    {% else %}
+
+                                        <div class="aula aula-ocupada">
+
+                                            <strong>
+                                                {{ celula.aula.aluno.nome_completo }}
+                                            </strong>
+
+                                            <span>
+                                                {{ celula.aula.disciplina.nome }}
+                                            </span>
+
+                                        </div>
+
+                                    {% endif %}
+
+                                {% else %}
+
+                                    <!-- Horário disponível -->
+                                    <div class="aula-disponivel">
+                                        <span>Disponível</span>
+                                    </div>
+
+                                {% endif %}
+
+                            {% else %}
+
+                                <!-- Horário não configurado -->
+                                <div class="agenda-vazio"></div>
+
+                            {% endif %}
+
+                        </div>
+
+                    {% endfor %}
+
+                {% endfor %}
+
+            </div>
+
+        </div>
+
+        {% if modo_edicao %}
+
+            </form>
+
+            <p class="agenda-ajuda">
+                Para deixar um horário livre, selecione "Horário livre"
+                no campo Aluno. As mudanças só serão aplicadas depois
+                de clicar em "Salvar alterações".
+            </p>
+
+        {% else %}
+
+            <p class="agenda-ajuda">
+                Clique em uma aula para abrir o diário de bordo do aluno.
+            </p>
+
+        {% endif %}
+
+    {% else %}
+
+        <!-- Agenda ainda não configurada -->
+        <div class="agenda-sem-horarios">
+
+            <p>
+                Sua agenda ainda não possui dias e horários configurados.
+            </p>
+
+            <a href="{% url 'configuracoes' %}">
+                Configurar agenda
+            </a>
+
+        </div>
+
+    {% endif %}
 
 </div>
 
