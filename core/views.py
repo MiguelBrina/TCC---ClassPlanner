@@ -1,7 +1,13 @@
 
+from datetime import date
+from decimal import Decimal, InvalidOperation
+from io import BytesIO
+
 from django.contrib.auth.decorators import login_required
 from django.db import IntegrityError, transaction
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.utils import timezone
 
 from .forms import (
     AlunoForm,
@@ -19,13 +25,17 @@ from .models import (
     DiarioDeBordo,
     Disciplina,
     Matricula,
+    Mensalidade,
     Registro,
     Tema,
 )
 
-# Modelos responsáveis pela organização da agenda.
 from account.models import AgendaProfessor, DisponibilidadeProfessor
 
+
+# ============================================================
+# PÁGINA INICIAL
+# ============================================================
 
 def index(request):
     if request.user.is_authenticated:
@@ -40,22 +50,13 @@ def index(request):
 
 @login_required
 def painel(request):
-    """
-    Exibe e edita a agenda semanal do professor.
-
-    As alterações só são gravadas quando o professor clica
-    em Salvar alterações.
-    """
-
     professor = request.user.professor
 
-    # Recupera ou cria a agenda principal.
     agenda, _ = AgendaProfessor.objects.get_or_create(
         professor=professor,
         nome="Agenda principal",
     )
 
-    # Recupera os blocos de disponibilidade da agenda.
     disponibilidades = list(
         DisponibilidadeProfessor.objects
         .filter(
@@ -69,7 +70,6 @@ def painel(request):
         .order_by("dia_semana", "horario")
     )
 
-    # Identifica os dias configurados.
     dias = {}
 
     for bloco in disponibilidades:
@@ -80,19 +80,16 @@ def painel(request):
 
     dias = dict(sorted(dias.items()))
 
-    # Recupera os horários sem repetição.
     horarios = sorted({
         bloco.horario
         for bloco in disponibilidades
     })
 
-    # Organiza os blocos por dia e horário.
     mapa_disponibilidades = {
         (bloco.dia_semana, bloco.horario): bloco
         for bloco in disponibilidades
     }
 
-    # Recupera as matrículas pertencentes ao professor.
     matriculas = list(
         Matricula.objects
         .filter(
@@ -103,22 +100,16 @@ def painel(request):
         .order_by("aluno__nome_completo", "disciplina__nome")
     )
 
-    # Recupera os alunos do professor.
     alunos = list(
         Aluno.objects
         .filter(professor=professor)
         .order_by("nome_completo")
     )
 
-    # --------------------------------------------------------
-    # PROCESSAMENTO DO FORMULÁRIO
-    # --------------------------------------------------------
-
     if request.method == "POST":
 
         acao = request.POST.get("acao")
 
-        # Cancelar não grava nenhuma alteração.
         if acao == "cancelar":
             return redirect("painel")
 
@@ -127,7 +118,6 @@ def painel(request):
             erro = None
             atribuicoes = []
 
-            # Primeiro validamos todos os campos.
             for bloco in disponibilidades:
 
                 aluno_id = request.POST.get(
@@ -138,12 +128,10 @@ def painel(request):
                     f"disciplina_{bloco.pk}", ""
                 ).strip()
 
-                # Os dois campos vazios deixam o horário livre.
                 if not aluno_id and not disciplina_id:
                     atribuicoes.append((bloco, None, None))
                     continue
 
-                # Não permite selecionar somente um dos campos.
                 if not aluno_id or not disciplina_id:
                     erro = (
                         "Selecione um aluno e uma disciplina "
@@ -151,7 +139,6 @@ def painel(request):
                     )
                     break
 
-                # Verifica se existe matrícula válida.
                 matricula = (
                     Matricula.objects
                     .filter(
@@ -179,7 +166,6 @@ def painel(request):
                     )
                 )
 
-            # Só salva se todas as atribuições forem válidas.
             if erro is None:
 
                 try:
@@ -187,7 +173,6 @@ def painel(request):
 
                         for bloco, aluno, disciplina in atribuicoes:
 
-                            # Horário vazio: remove a aula do bloco.
                             if aluno is None:
 
                                 Aula.objects.filter(
@@ -196,7 +181,6 @@ def painel(request):
 
                             else:
 
-                                # Cria ou atualiza a aula do bloco.
                                 Aula.objects.update_or_create(
                                     disponibilidade=bloco,
                                     defaults={
@@ -209,7 +193,6 @@ def painel(request):
                                 )
 
                 except IntegrityError:
-
                     erro = (
                         "Não foi possível salvar a agenda. "
                         "Verifique os horários e tente novamente."
@@ -225,14 +208,8 @@ def painel(request):
             modo_edicao = True
 
     else:
-
-        # Abre em modo de visualização por padrão.
         modo_edicao = request.GET.get("editar") == "1"
         erro = None
-
-    # --------------------------------------------------------
-    # MONTAGEM DA GRADE SEMANAL
-    # --------------------------------------------------------
 
     grade = []
 
@@ -252,7 +229,6 @@ def painel(request):
                 else None
             )
 
-            # Recupera a matrícula correspondente à aula.
             matricula_atual = None
 
             if aula:
@@ -299,7 +275,6 @@ def painel(request):
 
 @login_required
 def lista_disciplinas(request):
-
     professor = request.user.professor
 
     disciplinas = (
@@ -344,7 +319,6 @@ def lista_disciplinas(request):
 
 @login_required
 def editar_disciplina(request, pk):
-
     professor = request.user.professor
 
     disciplina = get_object_or_404(
@@ -394,7 +368,6 @@ def editar_disciplina(request, pk):
 
 @login_required
 def excluir_disciplina(request, pk):
-
     professor = request.user.professor
 
     if request.method == "POST":
@@ -416,7 +389,6 @@ def excluir_disciplina(request, pk):
 
 @login_required
 def lista_temas(request, disciplina_id):
-
     professor = request.user.professor
 
     disciplina = get_object_or_404(
@@ -468,7 +440,6 @@ def lista_temas(request, disciplina_id):
 
 @login_required
 def editar_tema(request, pk):
-
     professor = request.user.professor
 
     tema = get_object_or_404(
@@ -522,7 +493,6 @@ def editar_tema(request, pk):
 
 @login_required
 def excluir_tema(request, pk):
-
     professor = request.user.professor
 
     if request.method == "POST":
@@ -550,7 +520,6 @@ def excluir_tema(request, pk):
 
 @login_required
 def lista_conteudos(request, tema_id):
-
     professor = request.user.professor
 
     tema = get_object_or_404(
@@ -602,7 +571,6 @@ def lista_conteudos(request, tema_id):
 
 @login_required
 def editar_conteudo(request, pk):
-
     professor = request.user.professor
 
     conteudo = get_object_or_404(
@@ -656,7 +624,6 @@ def editar_conteudo(request, pk):
 
 @login_required
 def excluir_conteudo(request, pk):
-
     professor = request.user.professor
 
     if request.method == "POST":
@@ -684,11 +651,6 @@ def excluir_conteudo(request, pk):
 
 @login_required
 def lista_alunos(request):
-    """
-    Exibe os alunos do professor autenticado.
-    Permite pesquisar por nome e filtrar por disciplina.
-    """
-
     professor = request.user.professor
 
     busca = request.GET.get("q", "").strip()
@@ -729,7 +691,6 @@ def lista_alunos(request):
 
 @login_required
 def cadastrar_aluno(request):
-
     professor = request.user.professor
 
     if request.method == "POST":
@@ -761,7 +722,6 @@ def cadastrar_aluno(request):
 
 @login_required
 def detalhe_aluno(request, aluno_id):
-
     professor = request.user.professor
 
     aluno = get_object_or_404(
@@ -780,19 +740,30 @@ def detalhe_aluno(request, aluno_id):
         .order_by("disciplina__nome")
     )
 
+    temas_conhecidos = (
+        Tema.objects
+        .filter(
+            registros__diario__matricula__aluno=aluno,
+            disciplina__professor=professor,
+        )
+        .select_related("disciplina")
+        .distinct()
+        .order_by("disciplina__nome", "nome")
+    )
+
     return render(
         request,
         "core/alunos/detalhe.html",
         {
             "aluno": aluno,
             "matriculas": matriculas,
+            "temas_conhecidos": temas_conhecidos,
         },
     )
 
 
 @login_required
 def editar_aluno(request, aluno_id):
-
     professor = request.user.professor
 
     aluno = get_object_or_404(
@@ -831,7 +802,6 @@ def editar_aluno(request, aluno_id):
 
 @login_required
 def excluir_aluno(request, aluno_id):
-
     professor = request.user.professor
 
     if request.method == "POST":
@@ -853,11 +823,6 @@ def excluir_aluno(request, aluno_id):
 
 @login_required
 def matricular_aluno(request, aluno_id):
-    """
-    Permite matricular um aluno em várias disciplinas.
-    Também garante a criação do diário correspondente.
-    """
-
     professor = request.user.professor
 
     aluno = get_object_or_404(
@@ -878,6 +843,7 @@ def matricular_aluno(request, aluno_id):
 
             data_inicio = form.cleaned_data["data_inicio"]
             disciplinas = form.cleaned_data["disciplinas"]
+            valor_mensal = form.cleaned_data["valor_mensal"]
 
             try:
                 with transaction.atomic():
@@ -890,6 +856,7 @@ def matricular_aluno(request, aluno_id):
                                 disciplina=disciplina,
                                 defaults={
                                     "data_inicio": data_inicio,
+                                    "valor_mensal": valor_mensal,
                                 },
                             )
                         )
@@ -899,7 +866,6 @@ def matricular_aluno(request, aluno_id):
                         )
 
             except IntegrityError:
-
                 form.add_error(
                     None,
                     "Não foi possível concluir todas as matrículas. "
@@ -913,7 +879,6 @@ def matricular_aluno(request, aluno_id):
                 )
 
     else:
-
         form = MatricularDisciplinasForm(
             professor=professor,
             aluno=aluno,
@@ -935,10 +900,6 @@ def matricular_aluno(request, aluno_id):
 
 @login_required
 def diario_aluno(request, aluno_id, matricula_id):
-    """
-    Abre o diário da disciplina associada à matrícula.
-    """
-
     professor = request.user.professor
 
     aluno = get_object_or_404(
@@ -957,7 +918,6 @@ def diario_aluno(request, aluno_id, matricula_id):
         disciplina__professor=professor,
     )
 
-    # Garante que a matrícula tenha um diário.
     diario, _ = DiarioDeBordo.objects.get_or_create(
         matricula=matricula,
     )
@@ -976,10 +936,7 @@ def diario_aluno(request, aluno_id, matricula_id):
             registro.diario = diario
 
             with transaction.atomic():
-
                 registro.save()
-
-                # Salva as relações ManyToMany.
                 form.save_m2m()
 
             return redirect(
@@ -989,7 +946,6 @@ def diario_aluno(request, aluno_id, matricula_id):
             )
 
     else:
-
         form = RegistroMatriculaForm(
             professor=professor,
             disciplina=matricula.disciplina,
@@ -1021,7 +977,6 @@ def diario_aluno(request, aluno_id, matricula_id):
 
 @login_required
 def excluir_matricula(request, aluno_id, matricula_id):
-
     professor = request.user.professor
 
     if request.method == "POST":
@@ -1040,3 +995,442 @@ def excluir_matricula(request, aluno_id, matricula_id):
         "detalhe_aluno",
         aluno_id=aluno_id,
     )
+
+
+# ============================================================
+# FINANCEIRO - FUNÇÕES AUXILIARES
+# ============================================================
+
+def _competencia_da_requisicao(request):
+    valor = request.GET.get("mes") or request.POST.get("mes")
+
+    if valor:
+        try:
+            ano, mes = map(int, valor.split("-"))
+
+            if 1 <= mes <= 12 and 2000 <= ano <= 2100:
+                return date(ano, mes, 1)
+
+        except (ValueError, TypeError):
+            pass
+
+    hoje = timezone.localdate()
+
+    return date(hoje.year, hoje.month, 1)
+
+
+def _mensalidades_da_competencia(professor, competencia):
+    return (
+        Mensalidade.objects
+        .filter(
+            competencia=competencia,
+            matricula__aluno__professor=professor,
+            matricula__disciplina__professor=professor,
+        )
+        .select_related(
+            "matricula__aluno",
+            "matricula__disciplina",
+        )
+        .order_by(
+            "matricula__aluno__nome_completo",
+            "matricula__disciplina__nome",
+        )
+    )
+
+
+# ============================================================
+# FINANCEIRO - TELA PRINCIPAL
+# ============================================================
+
+@login_required
+def financeiro(request):
+    professor = request.user.professor
+    competencia = _competencia_da_requisicao(request)
+
+    if request.method == "POST":
+
+        acao = request.POST.get("acao")
+        matricula_id = request.POST.get("matricula_id")
+
+        matricula = get_object_or_404(
+            Matricula,
+            pk=matricula_id,
+            aluno__professor=professor,
+            disciplina__professor=professor,
+        )
+
+        # ----------------------------------------------------
+        # DEFINIR VALOR MENSAL PADRÃO
+        # ----------------------------------------------------
+
+        if acao == "salvar_valor":
+
+            try:
+                valor = Decimal(
+                    request.POST.get(
+                        "valor_mensal", ""
+                    ).replace(",", ".")
+                )
+
+                if (
+                    not valor.is_finite()
+                    or valor <= 0
+                    or valor > Decimal("99999999.99")
+                ):
+                    raise InvalidOperation
+
+            except (
+                InvalidOperation,
+                ValueError,
+                AttributeError,
+            ):
+
+                return render(
+                    request,
+                    "core/financeiro/index.html",
+                    {
+                        "competencia": competencia,
+                        "mes_input": competencia.strftime("%Y-%m"),
+                        "mensalidades": _mensalidades_da_competencia(
+                            professor,
+                            competencia,
+                        ),
+                        "matriculas_sem_valor": (
+                            Matricula.objects
+                            .filter(
+                                aluno__professor=professor,
+                                disciplina__professor=professor,
+                                valor_mensal__lte=0,
+                            )
+                            .select_related("aluno", "disciplina")
+                        ),
+                        "erro": "Informe um valor válido maior que zero.",
+                    },
+                )
+
+            matricula.valor_mensal = valor
+            matricula.save(update_fields=["valor_mensal"])
+
+            return redirect(
+                f"/financeiro/?mes={competencia:%Y-%m}"
+            )
+
+        # ----------------------------------------------------
+        # ALTERAR VALOR DE UM MÊS ESPECÍFICO
+        # ----------------------------------------------------
+
+        if acao == "alterar_valor_cobranca":
+
+            mensalidade = get_object_or_404(
+                Mensalidade,
+                pk=request.POST.get("mensalidade_id"),
+                matricula__aluno__professor=professor,
+                matricula__disciplina__professor=professor,
+            )
+
+            if not mensalidade.pago_em:
+
+                try:
+                    novo_valor = Decimal(
+                        request.POST.get(
+                            "valor", ""
+                        ).replace(",", ".")
+                    )
+
+                    if (
+                        not novo_valor.is_finite()
+                        or novo_valor <= 0
+                        or novo_valor > Decimal("99999999.99")
+                    ):
+                        raise InvalidOperation
+
+                except (
+                    InvalidOperation,
+                    ValueError,
+                    AttributeError,
+                ):
+                    return redirect(
+                        f"/financeiro/?mes={competencia:%Y-%m}"
+                    )
+
+                mensalidade.valor = novo_valor
+                mensalidade.save(update_fields=["valor"])
+
+            return redirect(
+                f"/financeiro/?mes={competencia:%Y-%m}"
+            )
+
+        # ----------------------------------------------------
+        # CONFIRMAR PAGAMENTO
+        # ----------------------------------------------------
+
+        if acao == "confirmar_pagamento":
+
+            mensalidade = get_object_or_404(
+                Mensalidade,
+                pk=request.POST.get("mensalidade_id"),
+                matricula__aluno__professor=professor,
+                matricula__disciplina__professor=professor,
+            )
+
+            if (
+                mensalidade.competencia == competencia
+                and not mensalidade.pago_em
+            ):
+                mensalidade.pago_em = timezone.now()
+                mensalidade.save(update_fields=["pago_em"])
+
+            return redirect(
+                f"/financeiro/?mes={competencia:%Y-%m}"
+            )
+
+    # --------------------------------------------------------
+    # GERAR MENSALIDADES DA COMPETÊNCIA CONSULTADA
+    # --------------------------------------------------------
+
+    matriculas = (
+        Matricula.objects
+        .filter(
+            aluno__professor=professor,
+            disciplina__professor=professor,
+            valor_mensal__gt=0,
+        )
+        .select_related("aluno", "disciplina")
+    )
+
+    for matricula in matriculas:
+
+        Mensalidade.objects.get_or_create(
+            matricula=matricula,
+            competencia=competencia,
+            defaults={
+                "valor": matricula.valor_mensal,
+            },
+        )
+
+    mensalidades = _mensalidades_da_competencia(
+        professor,
+        competencia,
+    )
+
+    matriculas_sem_valor = (
+        Matricula.objects
+        .filter(
+            aluno__professor=professor,
+            disciplina__professor=professor,
+            valor_mensal__lte=0,
+        )
+        .select_related("aluno", "disciplina")
+        .order_by(
+            "aluno__nome_completo",
+            "disciplina__nome",
+        )
+    )
+
+    return render(
+        request,
+        "core/financeiro/index.html",
+        {
+            "competencia": competencia,
+            "mes_input": competencia.strftime("%Y-%m"),
+            "mensalidades": mensalidades,
+            "matriculas_sem_valor": matriculas_sem_valor,
+            "erro": None,
+        },
+    )
+
+
+# ============================================================
+# RECIBO DE PAGAMENTO EM PDF
+# ============================================================
+
+@login_required
+def recibo_mensalidade_pdf(request, mensalidade_id):
+    professor = request.user.professor
+
+    mensalidade = get_object_or_404(
+        Mensalidade.objects.select_related(
+            "matricula__aluno",
+            "matricula__disciplina",
+        ),
+        pk=mensalidade_id,
+        matricula__aluno__professor=professor,
+        matricula__disciplina__professor=professor,
+    )
+
+    if not mensalidade.pago_em:
+        return redirect(
+            f"/financeiro/?mes={mensalidade.competencia:%Y-%m}"
+        )
+
+    from reportlab.lib import colors
+    from reportlab.lib.pagesizes import A4
+    from reportlab.lib.styles import (
+        getSampleStyleSheet,
+        ParagraphStyle,
+    )
+    from reportlab.lib.enums import TA_CENTER
+    from reportlab.platypus import (
+        SimpleDocTemplate,
+        Paragraph,
+        Spacer,
+        Table,
+        TableStyle,
+    )
+    from reportlab.lib.units import mm
+
+    buffer = BytesIO()
+
+    pdf = SimpleDocTemplate(
+        buffer,
+        pagesize=A4,
+        rightMargin=22 * mm,
+        leftMargin=22 * mm,
+        topMargin=22 * mm,
+        bottomMargin=22 * mm,
+    )
+
+    styles = getSampleStyleSheet()
+
+    title_style = ParagraphStyle(
+        "ReceiptTitle",
+        parent=styles["Title"],
+        alignment=TA_CENTER,
+        textColor=colors.HexColor("#1d4ed8"),
+    )
+
+    story = [
+        Paragraph(
+            "RECIBO DE MENSALIDADE",
+            title_style,
+        ),
+        Spacer(1, 12 * mm),
+        Paragraph(
+            "Recebemos o pagamento referente à mensalidade abaixo:",
+            styles["BodyText"],
+        ),
+        Spacer(1, 5 * mm),
+    ]
+
+    nome_professor = (
+        request.user.get_full_name()
+        or request.user.get_username()
+    )
+
+    dados = [
+        ["Professor", nome_professor],
+        [
+            "Aluno",
+            mensalidade.matricula.aluno.nome_completo,
+        ],
+        [
+            "Disciplina",
+            mensalidade.matricula.disciplina.nome,
+        ],
+        [
+            "Competência",
+            mensalidade.competencia.strftime("%m/%Y"),
+        ],
+        [
+            "Valor recebido",
+            (
+                f"R$ {mensalidade.valor:,.2f}"
+                .replace(",", "X")
+                .replace(".", ",")
+                .replace("X", ".")
+            ),
+        ],
+        [
+            "Data da confirmação",
+            timezone.localtime(
+                mensalidade.pago_em
+            ).strftime("%d/%m/%Y às %H:%M"),
+        ],
+        [
+            "Identificação",
+            f"CP-{mensalidade.pk:06d}",
+        ],
+    ]
+
+    tabela = Table(
+        dados,
+        colWidths=[45 * mm, 115 * mm],
+    )
+
+    tabela.setStyle(
+        TableStyle([
+            (
+                "BACKGROUND",
+                (0, 0),
+                (0, -1),
+                colors.HexColor("#eff6ff"),
+            ),
+            (
+                "TEXTCOLOR",
+                (0, 0),
+                (0, -1),
+                colors.HexColor("#1e3a8a"),
+            ),
+            (
+                "GRID",
+                (0, 0),
+                (-1, -1),
+                0.5,
+                colors.HexColor("#dbeafe"),
+            ),
+            (
+                "VALIGN",
+                (0, 0),
+                (-1, -1),
+                "MIDDLE",
+            ),
+            (
+                "LEFTPADDING",
+                (0, 0),
+                (-1, -1),
+                9,
+            ),
+            (
+                "RIGHTPADDING",
+                (0, 0),
+                (-1, -1),
+                9,
+            ),
+            (
+                "TOPPADDING",
+                (0, 0),
+                (-1, -1),
+                9,
+            ),
+            (
+                "BOTTOMPADDING",
+                (0, 0),
+                (-1, -1),
+                9,
+            ),
+        ])
+    )
+
+    story.extend([
+        tabela,
+        Spacer(1, 15 * mm),
+        Paragraph(
+            "Pagamento confirmado pelo professor no ClassPlanner.",
+            styles["Italic"],
+        ),
+    ])
+
+    pdf.build(story)
+
+    buffer.seek(0)
+
+    response = HttpResponse(
+        buffer.getvalue(),
+        content_type="application/pdf",
+    )
+
+    response["Content-Disposition"] = (
+        f'attachment; filename="recibo-mensalidade-{mensalidade.pk}.pdf"'
+    )
+
+    return response

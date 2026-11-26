@@ -116,5 +116,16 @@ urlpatterns = [
         views.diario_aluno,
         name="diario_aluno",
     ),
+        # Financeiro.
+    path(
+        "financeiro/",
+        views.financeiro,
+        name="financeiro",
+    ),
+    path(
+        "financeiro/mensalidade/<int:mensalidade_id>/recibo/",
+        views.recibo_mensalidade_pdf,
+        name="recibo_mensalidade_pdf",
+    ),
 
 ]

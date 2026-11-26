@@ -1,0 +1,531 @@
+
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Financeiro | ClassPlanner</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            background: #f5f7fb;
+            color: #172033;
+            font-family: Arial, sans-serif;
+        }
+
+        .wrap {
+            max-width: 1100px;
+            margin: 38px auto;
+            padding: 0 18px;
+        }
+
+        .top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .top h1 {
+            margin: 0;
+            font-size: 28px;
+        }
+
+        .muted {
+            color: #64748b;
+        }
+
+        .panel {
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 14px;
+            padding: 20px;
+            margin-top: 20px;
+            box-shadow: 0 3px 12px #0f172a08;
+        }
+
+        .filters {
+            display: flex;
+            gap: 12px;
+            align-items: end;
+            flex-wrap: wrap;
+        }
+
+        .field {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .field label {
+            font-size: 13px;
+            font-weight: 700;
+            color: #475569;
+        }
+
+        input {
+            padding: 10px 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            font-size: 15px;
+        }
+
+        button,
+        .btn {
+            border: 0;
+            border-radius: 8px;
+            padding: 10px 14px;
+            background: #2563eb;
+            color: white;
+            font-weight: 700;
+            text-decoration: none;
+            cursor: pointer;
+            display: inline-block;
+        }
+
+        button.secondary,
+        .btn.secondary {
+            background: #e2e8f0;
+            color: #1e293b;
+        }
+
+        button.green {
+            background: #15803d;
+        }
+
+        .alert {
+            padding: 12px;
+            border-radius: 9px;
+            background: #fff7ed;
+            color: #9a3412;
+            margin-top: 12px;
+        }
+
+        .error {
+            background: #fef2f2;
+            color: #b91c1c;
+        }
+
+        .table-wrap {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 12px;
+            min-width: 700px;
+        }
+
+        th,
+        td {
+            text-align: left;
+            padding: 13px 10px;
+            border-bottom: 1px solid #e2e8f0;
+            vertical-align: middle;
+        }
+
+        th {
+            font-size: 12px;
+            text-transform: uppercase;
+            color: #64748b;
+        }
+
+        td {
+            font-size: 14px;
+        }
+
+        .status {
+            display: inline-block;
+            border-radius: 99px;
+            padding: 5px 10px;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .pago {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .pendente {
+            background: #dbeafe;
+            color: #1d4ed8;
+        }
+
+        .atrasado {
+            background: #fee2e2;
+            color: #b91c1c;
+        }
+
+        .inline {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .inline input {
+            width: 130px;
+        }
+
+        .empty {
+            padding: 22px;
+            text-align: center;
+            color: #64748b;
+        }
+
+        .small {
+            font-size: 12px;
+            color: #64748b;
+        }
+
+        .actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        @media (max-width: 600px) {
+            .wrap {
+                margin-top: 20px;
+            }
+
+            .panel {
+                padding: 14px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<main class="wrap">
+
+    <div class="top">
+        <div>
+            <h1>Financeiro</h1>
+            <p class="muted">
+                Mensalidades por aluno e por disciplina
+            </p>
+        </div>
+
+        <a class="btn secondary" href="/alunos/">
+            Voltar para alunos
+        </a>
+    </div>
+
+    <!-- FILTRO DE MÊS -->
+
+    <section class="panel">
+
+        <form method="get" class="filters">
+
+            <div class="field">
+                <label for="mes">
+                    Mês de referência
+                </label>
+
+                <input
+                    id="mes"
+                    name="mes"
+                    type="month"
+                    value="{{ mes_input }}"
+                >
+            </div>
+
+            <button type="submit">
+                Consultar mês
+            </button>
+
+        </form>
+
+        <p class="small">
+            As cobranças são criadas automaticamente ao consultar
+            o mês, usando o valor padrão de cada matrícula.
+        </p>
+
+    </section>
+
+
+    <!-- MENSAGEM DE ERRO -->
+
+    {% if erro %}
+
+        <div class="alert error">
+            {{ erro }}
+        </div>
+
+    {% endif %}
+
+
+    <!-- CONFIGURAR VALORES ANTIGOS -->
+
+    {% if matriculas_sem_valor %}
+
+        <section class="panel">
+
+            <h2>Definir mensalidade padrão</h2>
+
+            <p class="muted">
+                Estas matrículas ainda não têm um valor configurado.
+                Defina o valor para começar a gerar as cobranças.
+            </p>
+
+            {% for matricula in matriculas_sem_valor %}
+
+                <form
+                    method="post"
+                    class="inline"
+                    style="padding: 12px 0; border-bottom: 1px solid #e2e8f0"
+                >
+
+                    {% csrf_token %}
+
+                    <input
+                        type="hidden"
+                        name="acao"
+                        value="salvar_valor"
+                    >
+
+                    <input
+                        type="hidden"
+                        name="matricula_id"
+                        value="{{ matricula.pk }}"
+                    >
+
+                    <input
+                        type="hidden"
+                        name="mes"
+                        value="{{ mes_input }}"
+                    >
+
+                    <strong style="min-width: 220px">
+                        {{ matricula.aluno.nome_completo }}
+                        — {{ matricula.disciplina.nome }}
+                    </strong>
+
+                    <label
+                        class="small"
+                        for="valor-{{ matricula.pk }}"
+                    >
+                        Valor padrão R$
+                    </label>
+
+                    <input
+                        id="valor-{{ matricula.pk }}"
+                        name="valor_mensal"
+                        type="number"
+                        min="0.01"
+                        step="0.01"
+                        required
+                        placeholder="150.00"
+                    >
+
+                    <button type="submit">
+                        Salvar valor
+                    </button>
+
+                </form>
+
+            {% endfor %}
+
+        </section>
+
+    {% endif %}
+
+
+    <!-- LISTAGEM DE MENSALIDADES -->
+
+    <section class="panel">
+
+        <h2>
+            Mensalidades de {{ competencia|date:"m/Y" }}
+        </h2>
+
+        <div class="table-wrap">
+
+            <table>
+
+                <thead>
+                    <tr>
+                        <th>Aluno</th>
+                        <th>Disciplina</th>
+                        <th>Valor</th>
+                        <th>Vencimento</th>
+                        <th>Status</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+
+                    {% for mensalidade in mensalidades %}
+
+                        <tr>
+
+                            <td>
+                                <strong>
+                                    {{ mensalidade.matricula.aluno.nome_completo }}
+                                </strong>
+                            </td>
+
+                            <td>
+                                {{ mensalidade.matricula.disciplina.nome }}
+                            </td>
+
+                            <td>
+                                R$ {{ mensalidade.valor|floatformat:2 }}
+                            </td>
+
+                            <td>
+                                {{ mensalidade.vencimento|date:"d/m/Y" }}
+                            </td>
+
+                            <td>
+                                <span class="status {{ mensalidade.status }}">
+                                    {{ mensalidade.status_display }}
+                                </span>
+                            </td>
+
+                            <td>
+
+                                <div class="actions">
+
+                                    {% if not mensalidade.pago_em %}
+
+                                        <!-- ALTERAR VALOR -->
+
+                                        <form method="post" class="inline">
+
+                                            {% csrf_token %}
+
+                                            <input
+                                                type="hidden"
+                                                name="acao"
+                                                value="alterar_valor_cobranca"
+                                            >
+
+                                            <input
+                                                type="hidden"
+                                                name="mensalidade_id"
+                                                value="{{ mensalidade.pk }}"
+                                            >
+
+                                            <input
+                                                type="hidden"
+                                                name="matricula_id"
+                                                value="{{ mensalidade.matricula_id }}"
+                                            >
+
+                                            <input
+                                                type="hidden"
+                                                name="mes"
+                                                value="{{ mes_input }}"
+                                            >
+
+                                            <input
+                                                aria-label="Novo valor desta mensalidade"
+                                                name="valor"
+                                                type="number"
+                                                min="0.01"
+                                                step="0.01"
+                                                value="{{ mensalidade.valor|stringformat:'s' }}"
+                                                required
+                                            >
+
+                                            <button
+                                                type="submit"
+                                                class="secondary"
+                                            >
+                                                Alterar valor
+                                            </button>
+
+                                        </form>
+
+
+                                        <!-- CONFIRMAR PAGAMENTO -->
+
+                                        <form method="post">
+
+                                            {% csrf_token %}
+
+                                            <input
+                                                type="hidden"
+                                                name="acao"
+                                                value="confirmar_pagamento"
+                                            >
+
+                                            <input
+                                                type="hidden"
+                                                name="mensalidade_id"
+                                                value="{{ mensalidade.pk }}"
+                                            >
+
+                                            <input
+                                                type="hidden"
+                                                name="matricula_id"
+                                                value="{{ mensalidade.matricula_id }}"
+                                            >
+
+                                            <input
+                                                type="hidden"
+                                                name="mes"
+                                                value="{{ mes_input }}"
+                                            >
+
+                                            <button
+                                                class="green"
+                                                type="submit"
+                                            >
+                                                Confirmar pagamento
+                                            </button>
+
+                                        </form>
+
+                                    {% else %}
+
+                                        <a
+                                            class="btn"
+                                            href="{% url 'recibo_mensalidade_pdf' mensalidade.pk %}"
+                                        >
+                                            Baixar recibo PDF
+                                        </a>
+
+                                    {% endif %}
+
+                                </div>
+
+                            </td>
+
+                        </tr>
+
+                    {% empty %}
+
+                        <tr>
+                            <td colspan="6" class="empty">
+                                Nenhuma mensalidade gerada para este mês.
+                                Confira se as matrículas possuem valor padrão configurado.
+                            </td>
+                        </tr>
+
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </section>
+
+</main>
+
+</body>
+</html>
