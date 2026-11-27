@@ -1044,6 +1044,7 @@ def _mensalidades_da_competencia(professor, competencia):
 
 @login_required
 def financeiro_matricula(request, aluno_id, matricula_id):
+    """Gerencia as cobranças de uma matrícula específica."""
     professor = request.user.professor
 
     competencia = _competencia_da_requisicao(request)
@@ -1062,58 +1063,39 @@ def financeiro_matricula(request, aluno_id, matricula_id):
         f"/alunos/{aluno_id}/matriculas/{matricula_id}/financeiro/"
     )
 
-    # Gera a mensalidade do mês atual e do mês consultado,
-    # caso ainda não existam e a matrícula tenha valor definido.
-    if matricula.valor_mensal > 0:
-        Mensalidade.objects.get_or_create(
-            matricula=matricula,
-            competencia=competencia_atual,
-            defaults={"valor": matricula.valor_mensal},
-        )
-
-        Mensalidade.objects.get_or_create(
-            matricula=matricula,
-            competencia=competencia,
-            defaults={"valor": matricula.valor_mensal},
-        )
+    def voltar_financeiro():
+        return redirect(f"{url_financeiro}?mes={competencia:%Y-%m}")
 
     def render_financeiro(erro=None):
-        # Todas as mensalidades pertencentes somente a esta matrícula.
         historico = list(
             Mensalidade.objects
             .filter(matricula=matricula)
-            .order_by("-competencia")
+            .order_by("-competencia", "-criado_em")
         )
 
-        total_pagas = 0
-        total_atrasadas = 0
-        pendentes_mes_atual = 0
-
-        for mensalidade in historico:
-            if mensalidade.pago_em:
-                total_pagas += 1
-                continue
-
-            vencimento = mensalidade.vencimento
-
-            if vencimento and vencimento < hoje:
-                total_atrasadas += 1
-
-            if (
-                mensalidade.competencia.year == competencia_atual.year
-                and mensalidade.competencia.month == competencia_atual.month
-                and (not vencimento or vencimento >= hoje)
-            ):
-                pendentes_mes_atual += 1
+        total_pagas = sum(1 for item in historico if item.pago_em)
+        total_atrasadas = sum(
+            1 for item in historico
+            if not item.pago_em and item.vencimento < hoje
+        )
 
         mensalidades_mes = [
-            mensalidade
-            for mensalidade in historico
-            if (
-                mensalidade.competencia.year == competencia.year
-                and mensalidade.competencia.month == competencia.month
-            )
+            item for item in historico
+            if item.competencia.year == competencia.year
+            and item.competencia.month == competencia.month
         ]
+
+        mensalidade_atual = next(
+            (
+                item for item in historico
+                if item.competencia == competencia_atual
+            ),
+            None,
+        )
+        status_mes_atual = (
+            "Pago" if mensalidade_atual and mensalidade_atual.pago_em
+            else "Pendente"
+        )
 
         return render(
             request,
@@ -1124,22 +1106,16 @@ def financeiro_matricula(request, aluno_id, matricula_id):
                 "competencia": competencia,
                 "mes_input": competencia.strftime("%Y-%m"),
                 "competencia_atual": competencia_atual,
-
-                # Histórico completo da matrícula.
                 "mensalidades": historico,
-
-                # Mensalidades do mês selecionado no filtro.
                 "mensalidades_mes": mensalidades_mes,
-
-                # Indicadores para os cards do financeiro.
                 "total_pagas": total_pagas,
                 "total_atrasadas": total_atrasadas,
-                "pendentes_mes_atual": pendentes_mes_atual,
-
+                "status_mes_atual": status_mes_atual,
+                "pendentes_mes_atual": (
+                    1 if status_mes_atual == "Pendente" else 0
+                ),
                 "matriculas_sem_valor": (
-                    [matricula]
-                    if matricula.valor_mensal <= 0
-                    else []
+                    [matricula] if matricula.valor_mensal <= 0 else []
                 ),
                 "erro": erro,
             },
@@ -1148,12 +1124,13 @@ def financeiro_matricula(request, aluno_id, matricula_id):
     if request.method == "POST":
         acao = request.POST.get("acao")
 
-        # Salvar o valor mensal padrão da matrícula.
+        # Define o valor de cada parcela e quantas cobranças mensais gerar.
         if acao == "salvar_valor":
             try:
                 valor = Decimal(
                     request.POST.get("valor_mensal", "").replace(",", ".")
                 )
+                quantidade = int(request.POST.get("quantidade_parcelas", "1"))
 
                 if (
                     not valor.is_finite()
@@ -1162,19 +1139,36 @@ def financeiro_matricula(request, aluno_id, matricula_id):
                 ):
                     raise InvalidOperation
 
-            except (InvalidOperation, ValueError, AttributeError):
+                if quantidade < 1 or quantidade > 60:
+                    raise ValueError
+
+            except (InvalidOperation, ValueError, TypeError, AttributeError):
                 return render_financeiro(
-                    "Informe um valor válido maior que zero."
+                    "Informe um valor válido e uma quantidade de 1 a 60 parcelas."
                 )
 
+            # O valor padrão passa a ser o valor de cada parcela mensal.
             matricula.valor_mensal = valor
             matricula.save(update_fields=["valor_mensal"])
 
-            return redirect(
-                f"{url_financeiro}?mes={competencia:%Y-%m}"
-            )
+            # Gera uma cobrança por mês, a partir do mês selecionado.
+            # Registros que já existem não são sobrescritos nem duplicados.
+            with transaction.atomic():
+                for deslocamento in range(quantidade):
+                    indice_mes = competencia.year * 12 + (competencia.month - 1) + deslocamento
+                    ano = indice_mes // 12
+                    mes = (indice_mes % 12) + 1
+                    data_competencia = date(ano, mes, 1)
 
-        # Salvar o valor de uma mensalidade específica.
+                    Mensalidade.objects.get_or_create(
+                        matricula=matricula,
+                        competencia=data_competencia,
+                        defaults={"valor": valor},
+                    )
+
+            return voltar_financeiro()
+
+        # Altera o valor de uma cobrança individual ainda não paga.
         if acao == "alterar_valor_cobranca":
             mensalidade = get_object_or_404(
                 Mensalidade,
@@ -1183,35 +1177,28 @@ def financeiro_matricula(request, aluno_id, matricula_id):
             )
 
             if mensalidade.pago_em:
-                return redirect(
-                    f"{url_financeiro}?mes={competencia:%Y-%m}"
-                )
+                return voltar_financeiro()
 
             try:
                 novo_valor = Decimal(
                     request.POST.get("valor", "").replace(",", ".")
                 )
-
                 if (
                     not novo_valor.is_finite()
                     or novo_valor <= 0
                     or novo_valor > Decimal("99999999.99")
                 ):
                     raise InvalidOperation
-
-            except (InvalidOperation, ValueError, AttributeError):
+            except (InvalidOperation, ValueError, TypeError, AttributeError):
                 return render_financeiro(
                     "Informe um valor válido para a mensalidade."
                 )
 
             mensalidade.valor = novo_valor
             mensalidade.save(update_fields=["valor"])
+            return voltar_financeiro()
 
-            return redirect(
-                f"{url_financeiro}?mes={competencia:%Y-%m}"
-            )
-
-        # Confirmar pagamento de uma mensalidade desta matrícula.
+        # Confirma o pagamento de uma cobrança.
         if acao == "confirmar_pagamento":
             mensalidade = get_object_or_404(
                 Mensalidade,
@@ -1223,9 +1210,17 @@ def financeiro_matricula(request, aluno_id, matricula_id):
                 mensalidade.pago_em = timezone.now()
                 mensalidade.save(update_fields=["pago_em"])
 
-            return redirect(
-                f"{url_financeiro}?mes={competencia:%Y-%m}"
+            return voltar_financeiro()
+
+        # Exclui somente o registro selecionado no histórico.
+        if acao == "excluir_mensalidade":
+            mensalidade = get_object_or_404(
+                Mensalidade,
+                pk=request.POST.get("mensalidade_id"),
+                matricula=matricula,
             )
+            mensalidade.delete()
+            return voltar_financeiro()
 
     return render_financeiro()
 
@@ -1507,7 +1502,7 @@ def recibo_mensalidade_pdf(request, mensalidade_id):
             "Recibo gerado pelo sistema ClassPlanner.",
             pequeno_style,
         ),
-    ])                   
+    ])
 
     pdf.build(story)
     buffer.seek(0)
