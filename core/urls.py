@@ -116,16 +116,19 @@ urlpatterns = [
         views.diario_aluno,
         name="diario_aluno",
     ),
-        # Financeiro.
+
+        # Financeiro individual por matrícula.
     path(
-        "financeiro/",
-        views.financeiro,
-        name="financeiro",
+        "alunos/<int:aluno_id>/matriculas/<int:matricula_id>/financeiro/",
+        views.financeiro_matricula,
+        name="financeiro_matricula",
     ),
+
+    # Recibo PDF.
     path(
         "financeiro/mensalidade/<int:mensalidade_id>/recibo/",
         views.recibo_mensalidade_pdf,
         name="recibo_mensalidade_pdf",
-    ),
+    ),   
 
 ]

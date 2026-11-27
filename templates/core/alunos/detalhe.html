@@ -1,7 +1,7 @@
 
 {% extends "base.html" %}
 {% load static %}
-
+<link rel="stylesheet" href="{% static 'core/style/financeiro.css' %}">
 {% block content %}
 
 <style>
@@ -34,6 +34,60 @@
     .temas-vazio {
         color: #64748b;
         font-size: 14px;
+    }
+
+    .matricula-card {
+        background: white;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 22px;
+        margin: 18px 0;
+        box-shadow: 0 2px 5px rgba(0,0,0,.04);
+    }
+
+    .matricula-card h3 {
+        margin-bottom: 12px;
+    }
+
+    .matricula-acoes {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 18px;
+    }
+
+    .matricula-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 10px 16px;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 14px;
+        text-decoration: none;
+        border: 1px solid transparent;
+        cursor: pointer;
+    }
+
+    .matricula-btn:hover {
+        opacity: .88;
+    }
+
+    .btn-diario {
+        color: #1d4ed8;
+        background: #eff6ff;
+        border-color: #bfdbfe;
+    }
+
+    .btn-financeiro {
+        color: white;
+        background: #2563eb;
+    }
+
+    .btn-excluir {
+        color: #dc2626;
+        background: #fef2f2;
+        border-color: #fecaca;
     }
 </style>
 
@@ -89,30 +143,52 @@
     </a>
 </p>
 
-<h2>Diários de Bordo</h2>
+<h2>Disciplinas matriculadas</h2>
 
 {% for matricula in matriculas %}
-    <section>
+    <section class="matricula-card">
+
         <h3>{{ matricula.disciplina.nome }}</h3>
 
         <p>
-            Início: {{ matricula.data_inicio|date:"d/m/Y" }}
+            <strong>Início:</strong>
+            {{ matricula.data_inicio|date:"d/m/Y" }}
         </p>
 
-        <a href="{% url 'diario_aluno' aluno.id matricula.id %}">
-            Abrir Diário de Bordo
-        </a>
+        <div class="matricula-acoes">
 
-        <form
-            method="post"
-            action="{% url 'excluir_matricula' aluno.id matricula.id %}"
-            class="form-excluir"
-            data-mensagem="Tem certeza que deseja excluir esta matrícula? O diário de bordo desta disciplina também será excluído."
-        >
-            {% csrf_token %}
-            <button type="submit">Excluir matrícula</button>
-        </form>
+            <a
+                class="matricula-btn btn-diario"
+                href="{% url 'diario_aluno' aluno.id matricula.id %}"
+            >
+                Abrir Diário de Bordo
+            </a>
+
+            <a
+                class="matricula-btn btn-financeiro"
+                href="{% url 'financeiro_matricula' aluno.id matricula.id %}"
+            >
+                Financeiro
+            </a>
+
+            <form
+                method="post"
+                action="{% url 'excluir_matricula' aluno.id matricula.id %}"
+                class="form-excluir"
+                data-mensagem="Tem certeza que deseja excluir esta matrícula? O diário de bordo desta disciplina também será excluído."
+            >
+                {% csrf_token %}
+                <button
+                    type="submit"
+                    class="matricula-btn btn-excluir"
+                >
+                    Excluir matrícula
+                </button>
+            </form>
+
+        </div>
     </section>
+
 {% empty %}
     <p>Este aluno ainda não possui disciplinas matriculadas.</p>
 {% endfor %}

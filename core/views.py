@@ -1043,33 +1043,116 @@ def _mensalidades_da_competencia(professor, competencia):
 # ============================================================
 
 @login_required
-def financeiro(request):
+def financeiro_matricula(request, aluno_id, matricula_id):
     professor = request.user.professor
+
     competencia = _competencia_da_requisicao(request)
+    hoje = timezone.localdate()
+    competencia_atual = hoje.replace(day=1)
 
-    if request.method == "POST":
+    matricula = get_object_or_404(
+        Matricula.objects.select_related("aluno", "disciplina"),
+        pk=matricula_id,
+        aluno_id=aluno_id,
+        aluno__professor=professor,
+        disciplina__professor=professor,
+    )
 
-        acao = request.POST.get("acao")
-        matricula_id = request.POST.get("matricula_id")
+    url_financeiro = (
+        f"/alunos/{aluno_id}/matriculas/{matricula_id}/financeiro/"
+    )
 
-        matricula = get_object_or_404(
-            Matricula,
-            pk=matricula_id,
-            aluno__professor=professor,
-            disciplina__professor=professor,
+    # Gera a mensalidade do mês atual e do mês consultado,
+    # caso ainda não existam e a matrícula tenha valor definido.
+    if matricula.valor_mensal > 0:
+        Mensalidade.objects.get_or_create(
+            matricula=matricula,
+            competencia=competencia_atual,
+            defaults={"valor": matricula.valor_mensal},
         )
 
-        # ----------------------------------------------------
-        # DEFINIR VALOR MENSAL PADRÃO
-        # ----------------------------------------------------
+        Mensalidade.objects.get_or_create(
+            matricula=matricula,
+            competencia=competencia,
+            defaults={"valor": matricula.valor_mensal},
+        )
 
+    def render_financeiro(erro=None):
+        # Todas as mensalidades pertencentes somente a esta matrícula.
+        historico = list(
+            Mensalidade.objects
+            .filter(matricula=matricula)
+            .order_by("-competencia")
+        )
+
+        total_pagas = 0
+        total_atrasadas = 0
+        pendentes_mes_atual = 0
+
+        for mensalidade in historico:
+            if mensalidade.pago_em:
+                total_pagas += 1
+                continue
+
+            vencimento = mensalidade.vencimento
+
+            if vencimento and vencimento < hoje:
+                total_atrasadas += 1
+
+            if (
+                mensalidade.competencia.year == competencia_atual.year
+                and mensalidade.competencia.month == competencia_atual.month
+                and (not vencimento or vencimento >= hoje)
+            ):
+                pendentes_mes_atual += 1
+
+        mensalidades_mes = [
+            mensalidade
+            for mensalidade in historico
+            if (
+                mensalidade.competencia.year == competencia.year
+                and mensalidade.competencia.month == competencia.month
+            )
+        ]
+
+        return render(
+            request,
+            "core/financeiro/financeiro.html",
+            {
+                "aluno": matricula.aluno,
+                "matricula": matricula,
+                "competencia": competencia,
+                "mes_input": competencia.strftime("%Y-%m"),
+                "competencia_atual": competencia_atual,
+
+                # Histórico completo da matrícula.
+                "mensalidades": historico,
+
+                # Mensalidades do mês selecionado no filtro.
+                "mensalidades_mes": mensalidades_mes,
+
+                # Indicadores para os cards do financeiro.
+                "total_pagas": total_pagas,
+                "total_atrasadas": total_atrasadas,
+                "pendentes_mes_atual": pendentes_mes_atual,
+
+                "matriculas_sem_valor": (
+                    [matricula]
+                    if matricula.valor_mensal <= 0
+                    else []
+                ),
+                "erro": erro,
+            },
+        )
+
+    if request.method == "POST":
+        acao = request.POST.get("acao")
+
+        # Salvar o valor mensal padrão da matrícula.
         if acao == "salvar_valor":
-
             try:
                 valor = Decimal(
-                    request.POST.get(
-                        "valor_mensal", ""
-                    ).replace(",", ".")
+                    request.POST.get("valor_mensal", "").replace(",", ".")
                 )
 
                 if (
@@ -1079,165 +1162,72 @@ def financeiro(request):
                 ):
                     raise InvalidOperation
 
-            except (
-                InvalidOperation,
-                ValueError,
-                AttributeError,
-            ):
-
-                return render(
-                    request,
-                    "core/financeiro/index.html",
-                    {
-                        "competencia": competencia,
-                        "mes_input": competencia.strftime("%Y-%m"),
-                        "mensalidades": _mensalidades_da_competencia(
-                            professor,
-                            competencia,
-                        ),
-                        "matriculas_sem_valor": (
-                            Matricula.objects
-                            .filter(
-                                aluno__professor=professor,
-                                disciplina__professor=professor,
-                                valor_mensal__lte=0,
-                            )
-                            .select_related("aluno", "disciplina")
-                        ),
-                        "erro": "Informe um valor válido maior que zero.",
-                    },
+            except (InvalidOperation, ValueError, AttributeError):
+                return render_financeiro(
+                    "Informe um valor válido maior que zero."
                 )
 
             matricula.valor_mensal = valor
             matricula.save(update_fields=["valor_mensal"])
 
             return redirect(
-                f"/financeiro/?mes={competencia:%Y-%m}"
+                f"{url_financeiro}?mes={competencia:%Y-%m}"
             )
 
-        # ----------------------------------------------------
-        # ALTERAR VALOR DE UM MÊS ESPECÍFICO
-        # ----------------------------------------------------
-
+        # Salvar o valor de uma mensalidade específica.
         if acao == "alterar_valor_cobranca":
-
             mensalidade = get_object_or_404(
                 Mensalidade,
                 pk=request.POST.get("mensalidade_id"),
-                matricula__aluno__professor=professor,
-                matricula__disciplina__professor=professor,
+                matricula=matricula,
+            )
+
+            if mensalidade.pago_em:
+                return redirect(
+                    f"{url_financeiro}?mes={competencia:%Y-%m}"
+                )
+
+            try:
+                novo_valor = Decimal(
+                    request.POST.get("valor", "").replace(",", ".")
+                )
+
+                if (
+                    not novo_valor.is_finite()
+                    or novo_valor <= 0
+                    or novo_valor > Decimal("99999999.99")
+                ):
+                    raise InvalidOperation
+
+            except (InvalidOperation, ValueError, AttributeError):
+                return render_financeiro(
+                    "Informe um valor válido para a mensalidade."
+                )
+
+            mensalidade.valor = novo_valor
+            mensalidade.save(update_fields=["valor"])
+
+            return redirect(
+                f"{url_financeiro}?mes={competencia:%Y-%m}"
+            )
+
+        # Confirmar pagamento de uma mensalidade desta matrícula.
+        if acao == "confirmar_pagamento":
+            mensalidade = get_object_or_404(
+                Mensalidade,
+                pk=request.POST.get("mensalidade_id"),
+                matricula=matricula,
             )
 
             if not mensalidade.pago_em:
-
-                try:
-                    novo_valor = Decimal(
-                        request.POST.get(
-                            "valor", ""
-                        ).replace(",", ".")
-                    )
-
-                    if (
-                        not novo_valor.is_finite()
-                        or novo_valor <= 0
-                        or novo_valor > Decimal("99999999.99")
-                    ):
-                        raise InvalidOperation
-
-                except (
-                    InvalidOperation,
-                    ValueError,
-                    AttributeError,
-                ):
-                    return redirect(
-                        f"/financeiro/?mes={competencia:%Y-%m}"
-                    )
-
-                mensalidade.valor = novo_valor
-                mensalidade.save(update_fields=["valor"])
-
-            return redirect(
-                f"/financeiro/?mes={competencia:%Y-%m}"
-            )
-
-        # ----------------------------------------------------
-        # CONFIRMAR PAGAMENTO
-        # ----------------------------------------------------
-
-        if acao == "confirmar_pagamento":
-
-            mensalidade = get_object_or_404(
-                Mensalidade,
-                pk=request.POST.get("mensalidade_id"),
-                matricula__aluno__professor=professor,
-                matricula__disciplina__professor=professor,
-            )
-
-            if (
-                mensalidade.competencia == competencia
-                and not mensalidade.pago_em
-            ):
                 mensalidade.pago_em = timezone.now()
                 mensalidade.save(update_fields=["pago_em"])
 
             return redirect(
-                f"/financeiro/?mes={competencia:%Y-%m}"
+                f"{url_financeiro}?mes={competencia:%Y-%m}"
             )
 
-    # --------------------------------------------------------
-    # GERAR MENSALIDADES DA COMPETÊNCIA CONSULTADA
-    # --------------------------------------------------------
-
-    matriculas = (
-        Matricula.objects
-        .filter(
-            aluno__professor=professor,
-            disciplina__professor=professor,
-            valor_mensal__gt=0,
-        )
-        .select_related("aluno", "disciplina")
-    )
-
-    for matricula in matriculas:
-
-        Mensalidade.objects.get_or_create(
-            matricula=matricula,
-            competencia=competencia,
-            defaults={
-                "valor": matricula.valor_mensal,
-            },
-        )
-
-    mensalidades = _mensalidades_da_competencia(
-        professor,
-        competencia,
-    )
-
-    matriculas_sem_valor = (
-        Matricula.objects
-        .filter(
-            aluno__professor=professor,
-            disciplina__professor=professor,
-            valor_mensal__lte=0,
-        )
-        .select_related("aluno", "disciplina")
-        .order_by(
-            "aluno__nome_completo",
-            "disciplina__nome",
-        )
-    )
-
-    return render(
-        request,
-        "core/financeiro/index.html",
-        {
-            "competencia": competencia,
-            "mes_input": competencia.strftime("%Y-%m"),
-            "mensalidades": mensalidades,
-            "matriculas_sem_valor": matriculas_sem_valor,
-            "erro": None,
-        },
-    )
+    return render_financeiro()
 
 
 # ============================================================
@@ -1258,170 +1248,268 @@ def recibo_mensalidade_pdf(request, mensalidade_id):
         matricula__disciplina__professor=professor,
     )
 
+    matricula = mensalidade.matricula
+
+    url_financeiro = (
+        f"/alunos/{matricula.aluno_id}/"
+        f"matriculas/{matricula.pk}/financeiro/"
+    )
+
+    # Recibo só pode ser emitido depois da confirmação do pagamento.
     if not mensalidade.pago_em:
         return redirect(
-            f"/financeiro/?mes={mensalidade.competencia:%Y-%m}"
+            f"{url_financeiro}?mes={mensalidade.competencia:%Y-%m}"
         )
 
+    from xml.sax.saxutils import escape
+
     from reportlab.lib import colors
+    from reportlab.lib.enums import TA_LEFT
     from reportlab.lib.pagesizes import A4
     from reportlab.lib.styles import (
         getSampleStyleSheet,
         ParagraphStyle,
     )
-    from reportlab.lib.enums import TA_CENTER
+    from reportlab.lib.units import mm
     from reportlab.platypus import (
         SimpleDocTemplate,
         Paragraph,
         Spacer,
         Table,
         TableStyle,
+        HRFlowable,
     )
-    from reportlab.lib.units import mm
 
     buffer = BytesIO()
+
+    nome_professor_original = (
+        professor.nome_exibicao.strip()
+        or professor.usuario.get_full_name().strip()
+        or professor.usuario.email
+    )
 
     pdf = SimpleDocTemplate(
         buffer,
         pagesize=A4,
-        rightMargin=22 * mm,
-        leftMargin=22 * mm,
-        topMargin=22 * mm,
-        bottomMargin=22 * mm,
+        rightMargin=25 * mm,
+        leftMargin=25 * mm,
+        topMargin=25 * mm,
+        bottomMargin=25 * mm,
+        title="Recibo de pagamento",
+        author=nome_professor_original,
     )
+
+    # Identidade visual neutra e profissional.
+    cor_texto = colors.HexColor("#252525")
+    cor_secundaria = colors.HexColor("#666666")
+    cor_linha = colors.HexColor("#E5E5E5")
+    cor_fundo = colors.HexColor("#F7F7F5")
+    cor_destaque = colors.HexColor("#34443A")
 
     styles = getSampleStyleSheet()
 
-    title_style = ParagraphStyle(
-        "ReceiptTitle",
+    titulo_style = ParagraphStyle(
+        "ReciboTitulo",
         parent=styles["Title"],
-        alignment=TA_CENTER,
-        textColor=colors.HexColor("#1d4ed8"),
+        fontName="Helvetica-Bold",
+        fontSize=19,
+        leading=24,
+        alignment=TA_LEFT,
+        textColor=cor_texto,
+        spaceAfter=4,
     )
+
+    subtitulo_style = ParagraphStyle(
+        "ReciboSubtitulo",
+        parent=styles["Normal"],
+        fontName="Helvetica",
+        fontSize=9,
+        leading=13,
+        textColor=cor_secundaria,
+    )
+
+    secao_style = ParagraphStyle(
+        "ReciboSecao",
+        parent=styles["Heading2"],
+        fontName="Helvetica-Bold",
+        fontSize=10,
+        leading=14,
+        textColor=cor_texto,
+        spaceBefore=5,
+        spaceAfter=7,
+    )
+
+    texto_style = ParagraphStyle(
+        "ReciboTexto",
+        parent=styles["Normal"],
+        fontName="Helvetica",
+        fontSize=9,
+        leading=14,
+        textColor=cor_texto,
+    )
+
+    valor_style = ParagraphStyle(
+        "ReciboValor",
+        parent=styles["Normal"],
+        fontName="Helvetica-Bold",
+        fontSize=21,
+        leading=26,
+        textColor=cor_destaque,
+    )
+
+    pequeno_style = ParagraphStyle(
+        "ReciboPequeno",
+        parent=styles["Normal"],
+        fontName="Helvetica",
+        fontSize=8,
+        leading=12,
+        textColor=cor_secundaria,
+    )
+
+    nome_professor = escape(nome_professor_original)
+    nome_aluno = escape(matricula.aluno.nome_completo)
+    nome_disciplina = escape(matricula.disciplina.nome)
+
+    # CPF é opcional. Só aparece no recibo se estiver preenchido.
+    cpf_professor = (professor.cpf or "").strip()
+
+    valor_formatado = (
+        f"R$ {mensalidade.valor:,.2f}"
+        .replace(",", "X")
+        .replace(".", ",")
+        .replace("X", ".")
+    )
+
+    data_emissao = timezone.localtime().strftime("%d/%m/%Y às %H:%M")
+    data_pagamento = timezone.localtime(
+        mensalidade.pago_em
+    ).strftime("%d/%m/%Y às %H:%M")
+
+    mes_referencia = mensalidade.competencia.strftime("%m/%Y")
 
     story = [
-        Paragraph(
-            "RECIBO DE MENSALIDADE",
-            title_style,
-        ),
-        Spacer(1, 12 * mm),
-        Paragraph(
-            "Recebemos o pagamento referente à mensalidade abaixo:",
-            styles["BodyText"],
-        ),
-        Spacer(1, 5 * mm),
+        Paragraph("RECIBO DE PAGAMENTO", titulo_style),
+        Paragraph("COMPROVANTE DE MENSALIDADE", subtitulo_style),
+        Spacer(1, 8 * mm),
+        HRFlowable(width="100%", thickness=1, color=cor_linha),
+        Spacer(1, 8 * mm),
+        Paragraph("DADOS DO PROFESSOR", secao_style),
     ]
 
-    nome_professor = (
-        request.user.get_full_name()
-        or request.user.get_username()
-    )
-
-    dados = [
-        ["Professor", nome_professor],
+    dados_professor = [
         [
-            "Aluno",
-            mensalidade.matricula.aluno.nome_completo,
-        ],
-        [
-            "Disciplina",
-            mensalidade.matricula.disciplina.nome,
-        ],
-        [
-            "Competência",
-            mensalidade.competencia.strftime("%m/%Y"),
-        ],
-        [
-            "Valor recebido",
-            (
-                f"R$ {mensalidade.valor:,.2f}"
-                .replace(",", "X")
-                .replace(".", ",")
-                .replace("X", ".")
-            ),
-        ],
-        [
-            "Data da confirmação",
-            timezone.localtime(
-                mensalidade.pago_em
-            ).strftime("%d/%m/%Y às %H:%M"),
-        ],
-        [
-            "Identificação",
-            f"CP-{mensalidade.pk:06d}",
+            Paragraph("<b>Professor</b>", texto_style),
+            Paragraph(nome_professor, texto_style),
         ],
     ]
 
-    tabela = Table(
-        dados,
-        colWidths=[45 * mm, 115 * mm],
-    )
-
-    tabela.setStyle(
-        TableStyle([
-            (
-                "BACKGROUND",
-                (0, 0),
-                (0, -1),
-                colors.HexColor("#eff6ff"),
-            ),
-            (
-                "TEXTCOLOR",
-                (0, 0),
-                (0, -1),
-                colors.HexColor("#1e3a8a"),
-            ),
-            (
-                "GRID",
-                (0, 0),
-                (-1, -1),
-                0.5,
-                colors.HexColor("#dbeafe"),
-            ),
-            (
-                "VALIGN",
-                (0, 0),
-                (-1, -1),
-                "MIDDLE",
-            ),
-            (
-                "LEFTPADDING",
-                (0, 0),
-                (-1, -1),
-                9,
-            ),
-            (
-                "RIGHTPADDING",
-                (0, 0),
-                (-1, -1),
-                9,
-            ),
-            (
-                "TOPPADDING",
-                (0, 0),
-                (-1, -1),
-                9,
-            ),
-            (
-                "BOTTOMPADDING",
-                (0, 0),
-                (-1, -1),
-                9,
-            ),
+    if cpf_professor:
+        dados_professor.append([
+            Paragraph("<b>CPF</b>", texto_style),
+            Paragraph(escape(cpf_professor), texto_style),
         ])
+
+    tabela_professor = Table(
+        dados_professor,
+        colWidths=[38 * mm, 122 * mm],
     )
+
+    tabela_professor.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, -1), cor_fundo),
+        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+        ("LEFTPADDING", (0, 0), (-1, -1), 10),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 10),
+        ("TOPPADDING", (0, 0), (-1, -1), 9),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 9),
+        ("LINEBELOW", (0, 0), (-1, -2), 0.5, cor_linha),
+    ]))
 
     story.extend([
-        tabela,
-        Spacer(1, 15 * mm),
-        Paragraph(
-            "Pagamento confirmado pelo professor no ClassPlanner.",
-            styles["Italic"],
-        ),
+        tabela_professor,
+        Spacer(1, 8 * mm),
+        Paragraph("DADOS DO PAGAMENTO", secao_style),
     ])
 
-    pdf.build(story)
+    dados_pagamento = [
+        [
+            Paragraph("<b>Aluno</b>", texto_style),
+            Paragraph(nome_aluno, texto_style),
+        ],
+        [
+            Paragraph("<b>Disciplina</b>", texto_style),
+            Paragraph(nome_disciplina, texto_style),
+        ],
+        [
+            Paragraph("<b>Mês de referência</b>", texto_style),
+            Paragraph(mes_referencia, texto_style),
+        ],
+        [
+            Paragraph("<b>Data da confirmação</b>", texto_style),
+            Paragraph(data_pagamento, texto_style),
+        ],
+    ]
 
+    tabela_pagamento = Table(
+        dados_pagamento,
+        colWidths=[48 * mm, 112 * mm],
+    )
+
+    tabela_pagamento.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, -1), colors.white),
+        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+        ("LEFTPADDING", (0, 0), (-1, -1), 10),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 10),
+        ("TOPPADDING", (0, 0), (-1, -1), 9),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 9),
+        ("LINEBELOW", (0, 0), (-1, -1), 0.5, cor_linha),
+    ]))
+
+    story.extend([
+        tabela_pagamento,
+        Spacer(1, 10 * mm),
+    ])
+
+    caixa_valor = Table(
+        [[
+            Paragraph("VALOR RECEBIDO", pequeno_style),
+            Paragraph(valor_formatado, valor_style),
+        ]],
+        colWidths=[65 * mm, 95 * mm],
+    )
+
+    caixa_valor.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, -1), cor_fundo),
+        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+        ("ALIGN", (1, 0), (1, 0), "RIGHT"),
+        ("LEFTPADDING", (0, 0), (-1, -1), 12),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 12),
+        ("TOPPADDING", (0, 0), (-1, -1), 13),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 13),
+    ]))
+
+    story.extend([
+        caixa_valor,
+        Spacer(1, 12 * mm),
+        Paragraph(
+            "Declaramos que o valor acima foi recebido e que o "
+            "pagamento referente ao mês indicado foi confirmado "
+            "pelo professor responsável.",
+            texto_style,
+        ),
+        Spacer(1, 12 * mm),
+        HRFlowable(width="100%", thickness=0.7, color=cor_linha),
+        Spacer(1, 5 * mm),
+        Paragraph(
+            f"Data de emissão: {data_emissao}",
+            pequeno_style,
+        ),
+        Paragraph(
+            "Recibo gerado pelo sistema ClassPlanner.",
+            pequeno_style,
+        ),
+    ])                   
+
+    pdf.build(story)
     buffer.seek(0)
 
     response = HttpResponse(
@@ -1430,7 +1518,7 @@ def recibo_mensalidade_pdf(request, mensalidade_id):
     )
 
     response["Content-Disposition"] = (
-        f'attachment; filename="recibo-mensalidade-{mensalidade.pk}.pdf"'
+        'attachment; filename="recibo-mensalidade.pdf"'
     )
 
     return response

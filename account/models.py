@@ -18,6 +18,11 @@ class Professor(models.Model):
         default=False
     )
 
+    cpf = models.CharField(
+    max_length=14,
+    blank=True
+    )
+
     def __str__(self):
         return self.nome_exibicao or self.usuario.first_name or self.usuario.email
 
